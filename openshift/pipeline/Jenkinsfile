@@ -13,8 +13,8 @@ node('maven') {
   String app = "${env.APPLICATION_NAME}"
   String ver = "1.0.${env.BUILD_NUMBER}"
 
-  String git_url = "${env.SOURCE_REPOSITORY_URL}"
-  String git_ref = "${env.SOURCE_REPOSITORY_REF}"
+  //String git_url = "${env.SOURCE_REPOSITORY_URL}"
+  //String git_ref = "${env.SOURCE_REPOSITORY_REF}"
 
   String jenkins = "${env.JENKINS_URL}/blue/organizations/jenkins"
   String job = "${env.JOB_NAME}".replaceAll(/\//, '%2F')
@@ -22,8 +22,6 @@ node('maven') {
   echo "PIPELINE    ${url}"
 
   String template = "https://raw.githubusercontent.com/nalbam/${app}/master/openshift/templates/deploy.json"
-
-  String mvnCmd = "mvn -s configuration/settings.xml"
 
   // https://github.com/openshift/jenkins/blob/master/slave-maven/contrib/settings.xml
   sh "sed -i 's|<!-- ### configured mirrors ### -->|<mirror><id>mirror</id><url>${env.MAVEN_MIRROR_URL}</url><mirrorOf>*</mirrorOf></mirror>|' ~/.m2/settings.xml"
