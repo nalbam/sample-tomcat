@@ -1,0 +1,106 @@
+#!groovy
+
+echo "APPLICATION  ${env.APPLICATION_NAME}"
+echo "JOB_NAME     ${env.JOB_NAME}"
+echo "BUILD_NUMBER ${env.BUILD_NUMBER}"
+echo "GIT_URL      ${env.SOURCE_REPOSITORY_URL}"
+echo "GIT_REF      ${env.SOURCE_REPOSITORY_REF}"
+echo "GIT_SECRET   ${env.SOURCE_REPOSITORY_SECRET}"
+echo "JENKINS_URL  ${env.JENKINS_URL}"
+echo "SLACK_URL    ${env.SLACK_WEBHOOK_URL}"
+
+node('maven') {
+  String app = "${env.APPLICATION_NAME}"
+  String ver = "1.0.${env.BUILD_NUMBER}"
+
+  String git_url = "${env.SOURCE_REPOSITORY_URL}"
+  String git_ref = "${env.SOURCE_REPOSITORY_REF}"
+
+  String jenkins = "${env.JENKINS_URL}/blue/organizations/jenkins"
+  String job = "${env.JOB_NAME}".replaceAll(/\//, '%2F')
+  String url = "${jenkins}/${job}/detail/ops-${env.APPLICATION_NAME}-pipeline/${env.BUILD_NUMBER}/pipeline/"
+  echo "PIPELINE    ${url}"
+
+  String template = "https://raw.githubusercontent.com/nalbam/${app}/master/openshift/templates/deploy.json"
+
+  String mvnCmd = "mvn -s configuration/settings.xml"
+
+  // https://github.com/openshift/jenkins/blob/master/slave-maven/contrib/settings.xml
+  //sh "sed -i 's|<!-- ### configured mirrors ### -->|<mirror><id>mirror</id><url>${env.MAVEN_MIRROR_URL}</url><mirrorOf>*</mirrorOf></mirror>|' ~/.m2/settings.xml"
+
+//  stage('Checkout') {
+//    if (env.SOURCE_REPOSITORY_SECRET) {
+//      git url: git_url, branch: git_ref, credentialsId: "ops-${env.SOURCE_REPOSITORY_SECRET}"
+//    } else {
+//      git url: git_url, branch: git_ref
+//    }
+//    if (git_ref == 'master') {
+//      sh "sed -i 's|<version>0.0.1-SNAPSHOT</version>|<version>${ver}</version>|' ./pom.xml"
+//    }
+//  }
+//  stage('Build') {
+//    try {
+//      timeout(time: 60, unit: 'MINUTES') {
+//        sh "${mvnCmd} package -DskipTests=true"
+//      }
+//    } catch (e) {
+//      notify("danger", "Build Failed: ${app}-${ver} <${url}|#${env.BUILD_NUMBER}>")
+//      throw e
+//    }
+//  }
+//  stage('Unit Tests') {
+//    try {
+//      timeout(time: 15, unit: 'MINUTES') {
+//        sh "${mvnCmd} test"
+//      }
+//    } catch (e) {
+//      notify("danger", "Unit Test Failed: ${app}-${ver} <${url}|#${env.BUILD_NUMBER}>")
+//      throw e
+//    }
+//  }
+//  stage('Code Analysis') {
+//    sh "${mvnCmd} sonar:sonar -Dsonar.host.url=${env.SONAR_HOST_URL} -DskipTests=true"
+//  }
+//  stage('Release') {
+//    try {
+//      timeout(time: 15, unit: 'MINUTES') {
+//        sh "${mvnCmd} deploy -DskipTests=true"
+//      }
+//    } catch (e) {
+//      notify("danger", "Deploy Failed: ${app}-${ver} <${url}|#${env.BUILD_NUMBER}>")
+//      throw e
+//    }
+//  }
+  stage('Build Image') {
+    openshiftBuild(namespace: 'ops', buildConfig: app, showBuildLogs: 'true')
+    openshiftTag(namespace: 'ops', sourceStream: app, sourceTag: 'latest', destinationNamespace: 'ops', destinationStream: app, destinationTag: ver)
+    notify("good", "Build Success: ${app}-${ver} <${url}|#${env.BUILD_NUMBER}>")
+  }
+  stage('Deploy DEV') {
+    //openshiftCreateResource(apiURL: template, namespace: 'dev')
+    openshiftTag(namespace: 'ops', sourceStream: app, sourceTag: ver, destinationNamespace: 'dev', destinationStream: app, destinationTag: 'latest')
+    openshiftDeploy(namespace: 'dev', deploymentConfig: app)
+    openshiftScale(namespace: 'dev', deploymentConfig: app, replicaCount: '1')
+  }
+  stage('Proceed QA') {
+    notify("#439FE0", "Proceed QA?: ${app}-${ver} <${url}|#${env.BUILD_NUMBER}>")
+    timeout(time: 15, unit: 'MINUTES') {
+      input(message: "Proceed QA?: ${app}-${ver}")
+    }
+  }
+  stage('Deploy QA') {
+    //openshiftCreateResource(apiURL: template, namespace: 'qa')
+    openshiftTag(namespace: 'ops', sourceStream: app, sourceTag: ver, destinationNamespace: 'qa', destinationStream: app, destinationTag: 'latest')
+    openshiftDeploy(namespace: 'qa', deploymentConfig: app)
+    openshiftScale(namespace: 'qa', deploymentConfig: app, replicaCount: '1')
+  }
+}
+
+def notify(color, message) {
+  try {
+    if (env.SLACK_WEBHOOK_URL) {
+      sh "curl -s http://toast.sh/helper/slack.sh | bash -s -- -u=${env.SLACK_WEBHOOK_URL} --color=${color} '${message}'"
+    }
+  } catch (ignored) {
+  }
+}
