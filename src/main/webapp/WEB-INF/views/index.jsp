@@ -6,6 +6,6 @@
 </head>
 <body>
 <h2>${message}</h2>
-<h4>Server date time is : ${date} </h4>
+<h4>Server date time is : ${date}</h4>
 </body>
 </html>
