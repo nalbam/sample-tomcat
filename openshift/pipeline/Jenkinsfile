@@ -26,51 +26,8 @@ node('maven') {
   String mvnCmd = "mvn -s configuration/settings.xml"
 
   // https://github.com/openshift/jenkins/blob/master/slave-maven/contrib/settings.xml
-  //sh "sed -i 's|<!-- ### configured mirrors ### -->|<mirror><id>mirror</id><url>${env.MAVEN_MIRROR_URL}</url><mirrorOf>*</mirrorOf></mirror>|' ~/.m2/settings.xml"
+  sh "sed -i 's|<!-- ### configured mirrors ### -->|<mirror><id>mirror</id><url>${env.MAVEN_MIRROR_URL}</url><mirrorOf>*</mirrorOf></mirror>|' ~/.m2/settings.xml"
 
-//  stage('Checkout') {
-//    if (env.SOURCE_REPOSITORY_SECRET) {
-//      git url: git_url, branch: git_ref, credentialsId: "ops-${env.SOURCE_REPOSITORY_SECRET}"
-//    } else {
-//      git url: git_url, branch: git_ref
-//    }
-//    if (git_ref == 'master') {
-//      sh "sed -i 's|<version>0.0.1-SNAPSHOT</version>|<version>${ver}</version>|' ./pom.xml"
-//    }
-//  }
-//  stage('Build') {
-//    try {
-//      timeout(time: 60, unit: 'MINUTES') {
-//        sh "${mvnCmd} package -DskipTests=true"
-//      }
-//    } catch (e) {
-//      notify("danger", "Build Failed: ${app}-${ver} <${url}|#${env.BUILD_NUMBER}>")
-//      throw e
-//    }
-//  }
-//  stage('Unit Tests') {
-//    try {
-//      timeout(time: 15, unit: 'MINUTES') {
-//        sh "${mvnCmd} test"
-//      }
-//    } catch (e) {
-//      notify("danger", "Unit Test Failed: ${app}-${ver} <${url}|#${env.BUILD_NUMBER}>")
-//      throw e
-//    }
-//  }
-//  stage('Code Analysis') {
-//    sh "${mvnCmd} sonar:sonar -Dsonar.host.url=${env.SONAR_HOST_URL} -DskipTests=true"
-//  }
-//  stage('Release') {
-//    try {
-//      timeout(time: 15, unit: 'MINUTES') {
-//        sh "${mvnCmd} deploy -DskipTests=true"
-//      }
-//    } catch (e) {
-//      notify("danger", "Deploy Failed: ${app}-${ver} <${url}|#${env.BUILD_NUMBER}>")
-//      throw e
-//    }
-//  }
   stage('Build Image') {
     openshiftBuild(namespace: 'ops', buildConfig: app, showBuildLogs: 'true')
     openshiftTag(namespace: 'ops', sourceStream: app, sourceTag: 'latest', destinationNamespace: 'ops', destinationStream: app, destinationTag: ver)
