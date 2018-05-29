@@ -24,6 +24,13 @@
       "required": true
     },
     {
+      "name": "VERSION",
+      "displayName": "Version",
+      "description": "Identifies the resources created for this application.",
+      "value": "0.0.0-SNAPSHOT",
+      "required": false
+    },
+    {
       "name": "SOURCE_REPOSITORY_URL",
       "displayName": "Git Repository URL",
       "description": "Git source URI for application",
