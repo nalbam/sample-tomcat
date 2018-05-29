@@ -2,11 +2,6 @@
 
 ## Openshift
 
-### s2i-tomcat (s2i)
-```bash
-oc import-image tomcat --from=docker.io/nalbam/s2i-tomcat --confirm -n openshift
-```
-
 ### Create Project
 ```bash
 oc new-project ops
@@ -16,6 +11,11 @@ oc new-project qa
 oc policy add-role-to-user admin developer -n ops
 oc policy add-role-to-user admin developer -n dev
 oc policy add-role-to-user admin developer -n qa
+```
+
+### s2i-tomcat
+```bash
+oc import-image tomcat --from=docker.io/nalbam/s2i-tomcat --confirm -n ops
 ```
 
 ### Create Catalog
