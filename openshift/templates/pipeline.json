@@ -19,14 +19,14 @@
     {
       "name": "APPLICATION_NAME",
       "displayName": "Name",
-      "description": "Identifies the resources created for this application.",
+      "description": "Application name.",
       "value": "sample-tomcat",
       "required": true
     },
     {
       "name": "VERSION",
       "displayName": "Version",
-      "description": "Identifies the resources created for this application.",
+      "description": "Application version.",
       "value": "0.0.0-SNAPSHOT",
       "required": false
     },
