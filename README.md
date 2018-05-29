@@ -4,9 +4,7 @@
 
 ### s2i-tomcat (s2i)
 ```bash
-oc project openshift
-
-oc import-image tomcat --from=docker.io/nalbam/s2i-tomcat --confirm
+oc import-image tomcat --from=docker.io/nalbam/s2i-tomcat --confirm -n openshift
 ```
 
 ### Create Project
