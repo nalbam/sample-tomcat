@@ -28,19 +28,13 @@ oc create -f https://raw.githubusercontent.com/nalbam/sample-tomcat/master/opens
 
 ### Create ConfigMap
 ```bash
-oc create configmap sample-tomcat \
+oc create configmap sample-tomcat -n dev \
     --from-literal=PROFILE=dev \
-    --from-literal=SLACK_WEBHOOK=https://hooks.slack.com/services/web/hook/token \
-    --from-literal=SLACK_CHANNEL=sandbox \
-    --from-literal=MESSAGE=UP \
-    -n dev
+    --from-literal=MESSAGE=UP
 
-oc create configmap sample-tomcat \
+oc create configmap sample-tomcat -n qa \
     --from-literal=PROFILE=qa \
-    --from-literal=SLACK_WEBHOOK=https://hooks.slack.com/services/web/hook/token \
-    --from-literal=SLACK_CHANNEL=sandbox \
-    --from-literal=MESSAGE=UP \
-    -n qa
+    --from-literal=MESSAGE=UP
 ```
 
 ### Create Applications
