@@ -111,8 +111,6 @@
       },
       "data": {
         "PROFILE": "${NAMESPACE}",
-        "SLACK_WEBHOOK": "https://hooks.slack.com/services/web/hook/token",
-        "SLACK_CHANNEL": "sandbox",
         "MESSAGE": "UP"
       }
     },
