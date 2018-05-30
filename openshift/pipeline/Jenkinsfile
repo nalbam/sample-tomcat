@@ -36,7 +36,8 @@ node('maven') {
     }
     String git_ver = sh(script: "git rev-parse --short=6 HEAD", returnStdout: true)
     ver = "1.0.${git_ver}"
-    sh "sed -i 's/<version>0.0.1-SNAPSHOT</version>/<version>${ver}</version>/' ./pom.xml"
+    def pom = readMavenPom file: 'pom.xml'
+    pom.version = "${ver}"
   }
   stage('Build') {
     try {
