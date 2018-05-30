@@ -12,7 +12,7 @@ echo "SLACK_URL    ${env.SLACK_WEBHOOK_URL}"
 node('maven') {
   String git_url = "${env.SOURCE_REPOSITORY_URL}"
   String git_ref = "${env.SOURCE_REPOSITORY_REF}"
-  String git_ver = "$(git rev-parse --short=6 HEAD)"
+  String git_ver = sh(script: "git rev-parse --short=6 HEAD", returnStdout: true)
 
   String app = "${env.APPLICATION_NAME}"
   String ver = "1.0.${git_ver}"
