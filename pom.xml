@@ -5,7 +5,7 @@
     <groupId>com.nalbam</groupId>
     <artifactId>sample-tomcat</artifactId>
     <packaging>war</packaging>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.1</version>
 
     <properties>
         <failOnMissingWebXml>false</failOnMissingWebXml>
