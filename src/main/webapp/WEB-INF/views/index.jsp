@@ -1,11 +1,26 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
 <head>
-    <title>Spring 4 MVC - Hello World</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="//stackpath.bootstrapcdn.com/bootstrap/4.1.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="//use.fontawesome.com/releases/v5.1.0/css/all.css">
+    <title>Hello, world!</title>
 </head>
 <body>
-<h2>${message}</h2>
-<h4>Server date time is : ${date}</h4>
+
+<main role="main">
+    <section class="jumbotron text-center">
+        <div class="container">
+            <h1><img src="https://cdn.nalbam.com/logo/spring-tomcat.png"></h1>
+            <h3>${host}</h3>
+            <p>${date}</p>
+        </div>
+    </section>
+</main>
+
+<script src="//code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+<script src="//stackpath.bootstrapcdn.com/bootstrap/4.1.2/js/bootstrap.min.js"></script>
 </body>
 </html>

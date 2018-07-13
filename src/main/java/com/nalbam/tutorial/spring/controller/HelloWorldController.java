@@ -5,9 +5,11 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.format.FormatStyle;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.TimeZone;
 
 @Controller
 public class HelloWorldController {
@@ -16,9 +18,18 @@ public class HelloWorldController {
     public String index(Model model) {
         model.addAttribute("message", "Hello Spring MVC!");
 
-        DateTimeFormatter formatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL);
-        LocalDate date = LocalDate.now();
-        model.addAttribute("date", date.format(formatter));
+        String host;
+        try {
+            host = InetAddress.getLocalHost().getHostName();
+        } catch (UnknownHostException e) {
+            host = "Unknown";
+            e.printStackTrace();
+        }
+        model.addAttribute("host", host);
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+        sdf.setTimeZone(TimeZone.getTimeZone("Asia/Seoul"));
+        model.addAttribute("date", sdf.format(new Date()));
 
         return "index";
     }
