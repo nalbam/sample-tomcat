@@ -1,0 +1,19 @@
+[environments]
+  [environments.development]
+    name = "sample-tomcat-development"
+    namespace = "default"
+    wait = true
+    watch = false
+    watch-delay = 2
+    auto-connect = false
+    dockerfile = ""
+    chart = ""
+  [environments.staging]
+    name = "sample-tomcat-staging"
+    namespace = "staging"
+    wait = true
+    watch = false
+    watch-delay = 2
+    auto-connect = false
+    dockerfile = ""
+    chart = ""
