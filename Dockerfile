@@ -1,6 +1,6 @@
 # Dockerfile
 
-FROM tomcat:8-jre8
+FROM tomcat:8-jre8-slim
 
 ENV TZ=Asia/Seoul
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
