@@ -2,7 +2,7 @@
 
 FROM tomcat:8-jre8-slim
 
-ENV TZ=Asia/Seoul
+ENV TZ Asia/Seoul
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
     echo $TZ > /etc/timezone && \
     rm -rf /usr/local/tomcat/webapps/*
