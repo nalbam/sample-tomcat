@@ -1,5 +1,5 @@
 def IMAGE_NAME = "sample-tomcat"
-def REPOSITORY_URL = "https://github.com/nalbam/sample-tomcat"
+def REPOSITORY_URL = "https://github.com/nalbam/sample-tomcat.git"
 def REPOSITORY_SECRET = ""
 def CLUSTER = ""
 def BASE_DOMAIN = ""
@@ -47,7 +47,7 @@ podTemplate(label: label, containers: [
           BASE_DOMAIN = pipeline.base_domain
         }
         if (!SLACK_TOKEN) {
-          SLACK_TOKEN = ""
+          SLACK_TOKEN = pipeline.slack_token
         }
       }
     }
