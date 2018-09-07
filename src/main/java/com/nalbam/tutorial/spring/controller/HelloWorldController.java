@@ -1,6 +1,8 @@
 package com.nalbam.tutorial.spring.controller;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,13 +16,16 @@ import java.util.TimeZone;
 @Controller
 public class HelloWorldController {
 
+    @Autowired
+    private Environment environment;
+
     @Value("${spring.profiles.active}")
     private String profile;
 
     @RequestMapping(path = {"/"}, method = RequestMethod.GET)
     public String index(Model model) {
         // profile
-        model.addAttribute("profile", profile);
+        model.addAttribute("profile", environment.getProperty("profile"));
 
         // message
         model.addAttribute("message", "Hello Spring MVC!");
