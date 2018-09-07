@@ -24,7 +24,8 @@ public class HelloWorldController {
         model.addAttribute("profile", environment.getProperty("profile"));
 
         // message
-        model.addAttribute("message", "Hello Spring MVC!");
+        // model.addAttribute("message", "Hello Spring MVC!");
+        model.addAttribute("message", environment.getProperty("message"));
 
         // host
         String host;
