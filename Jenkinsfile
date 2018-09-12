@@ -1,8 +1,8 @@
 def IMAGE_NAME = "sample-tomcat"
 def REPOSITORY_URL = "https://github.com/nalbam/sample-tomcat"
 def REPOSITORY_SECRET = ""
-def CLUSTER = "dev"
-def BASE_DOMAIN = "dev.nalbam.com"
+def CLUSTER = ""
+def BASE_DOMAIN = ""
 def SLACK_TOKEN = ""
 
 @Library("github.com/opspresso/pipeline")
