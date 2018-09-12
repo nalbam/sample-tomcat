@@ -1,5 +1,7 @@
 package com.nalbam.tutorial.spring.controller;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,10 +16,19 @@ import java.util.TimeZone;
 @Controller
 public class HelloWorldController {
 
+    @Autowired
+    private Environment environment;
+
     @RequestMapping(path = {"/"}, method = RequestMethod.GET)
     public String index(Model model) {
-        model.addAttribute("message", "Hello Spring MVC!");
+        // profile
+        model.addAttribute("profile", environment.getProperty("profile"));
 
+        // message
+        // model.addAttribute("message", "Hello Spring MVC!");
+        model.addAttribute("message", environment.getProperty("message"));
+
+        // host
         String host;
         try {
             host = InetAddress.getLocalHost().getHostName();
@@ -27,6 +38,7 @@ public class HelloWorldController {
         }
         model.addAttribute("host", host);
 
+        // date
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
         sdf.setTimeZone(TimeZone.getTimeZone("Asia/Seoul"));
         model.addAttribute("date", sdf.format(new Date()));
