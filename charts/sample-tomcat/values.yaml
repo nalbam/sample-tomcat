@@ -1,6 +1,6 @@
 replicaCount: 1
 image:
-  repository: sample-tomcat
+  repository: docker-registry.127.0.0.1.nip.io:30500/sample-tomcat
   tag: latest
   pullPolicy: Always
 service:
