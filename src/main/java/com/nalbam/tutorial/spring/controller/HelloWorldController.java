@@ -46,4 +46,17 @@ public class HelloWorldController {
         return "index";
     }
 
+    @RequestMapping(path = {"/stress"}, method = RequestMethod.GET)
+    public String stress(Model model) {
+        Double sum = 0d;
+        for (int i = 0; i < 1000000; i++) {
+            sum += Math.sqrt(i);
+        }
+
+        // sum
+        model.addAttribute("sum", sum);
+
+        return "stress";
+    }
+
 }
