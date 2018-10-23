@@ -54,7 +54,7 @@ public class HelloWorldController {
         }
 
         // sum
-        model.addAttribute("sum", sum);
+        model.addAttribute("sum", sum.toString());
 
         return "stress";
     }
