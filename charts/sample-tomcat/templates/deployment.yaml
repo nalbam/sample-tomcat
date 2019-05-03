@@ -29,6 +29,7 @@ spec:
         app.kubernetes.io/instance: {{ .Release.Name }}
         app.kubernetes.io/managed-by: {{ .Release.Service }}
         app.kubernetes.io/name: {{ include "fullname" . }}
+        version: stable
 {{- with .Values.pod.labels }}
 {{ toYaml . | indent 8 }}
 {{- end }}
@@ -44,8 +45,12 @@ spec:
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         ports:
         - containerPort: {{ .Values.service.internalPort }}
-        hostNetwork: true
-        dnsPolicy: ClusterFirstWithHostNet
+{{ if .Values.hostNetwork }}
+        hostNetwork: {{ .Values.hostNetwork }}
+{{ end }}
+{{ if .Values.dnsPolicy }}
+        dnsPolicy: {{ .Values.dnsPolicy }}
+{{ end }}
         resources:
 {{ toYaml .Values.resources | indent 10 }}
         readinessProbe:
@@ -55,6 +60,8 @@ spec:
         env:
           - name: PROFILE
             value: {{ .Values.profile }}
+          - name: NAMESPACE
+            value: {{ .Values.namespace }}
 {{ if or .Values.configmap.enabled .Values.secret.enabled }}
         envFrom:
 {{ end }}
