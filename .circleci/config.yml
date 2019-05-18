@@ -5,16 +5,28 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/python
+      - image: circleci/openjdk
     working_directory: ~/works
     steps:
       - checkout
+      - restore_cache:
+          keys:
+            - circleci-cache-{{ checksum "pom.xml" }}
       - run:
           name: Build
           command: |
             mkdir target
             curl -sLo target/builder.sh toast.sh/builder
             bash ./target/builder.sh
+            mvn package
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: circleci-cache-{{ checksum "pom.xml" }}
+      - store_artifacts:
+          path: ./target
+      - store_test_results:
+          path: ./target/surefire-reports
       - persist_to_workspace:
           root: ~/works
           paths:
