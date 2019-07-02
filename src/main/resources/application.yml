@@ -10,7 +10,7 @@ spring:
       WRITE_DATES_AS_TIMESTAMPS: false
 
 slack:
-  webhook: ${SLACK_WEBHOOK:https://hooks.slack.com/services/web/hook/token}
+  webhook: ${SLACK_WEBHOOK:/slack/token}
   channel: ${SLACK_CHANNEL:sandbox}
 
 message: ${MESSAGE:Refreshed}
