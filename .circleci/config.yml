@@ -66,6 +66,17 @@ jobs:
           name: Docker
           command: |
             bash ./target/builder.sh
+  trigger:
+    docker:
+      - image: circleci/python
+    working_directory: ~/works
+    steps:
+      - attach_workspace:
+          at: ~/works
+      - run:
+          name: Trigger
+          command: |
+            bash ./target/builder.sh
   slack:
     docker:
       - image: circleci/python
@@ -91,10 +102,17 @@ workflows:
       - publish:
           requires:
             - build
+          filters:
+            branches:
+              only:
+                - master
       - release:
           requires:
             - build
       - docker:
+          requires:
+            - release
+      - trigger:
           requires:
             - release
       - slack:
