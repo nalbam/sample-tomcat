@@ -19,10 +19,13 @@ public class HelloWorldController {
     @Autowired
     private Environment environment;
 
-    @RequestMapping(path = {"/"}, method = RequestMethod.GET)
+    @RequestMapping(path = { "/" }, method = RequestMethod.GET)
     public String index(Model model) {
         // profile
         model.addAttribute("profile", environment.getProperty("profile"));
+
+        // version
+        model.addAttribute("version", environment.getProperty("version"));
 
         // message
         // model.addAttribute("message", "Hello Spring MVC!");
@@ -46,7 +49,7 @@ public class HelloWorldController {
         return "index";
     }
 
-    @RequestMapping(path = {"/stress"}, method = RequestMethod.GET)
+    @RequestMapping(path = { "/stress" }, method = RequestMethod.GET)
     public String stress(Model model) {
         Double sum = 0d;
         for (int i = 0; i < 1000000; i++) {

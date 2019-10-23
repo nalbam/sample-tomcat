@@ -10,7 +10,7 @@ import org.springframework.web.servlet.view.JstlView;
 
 @EnableWebMvc
 @Configuration
-@ComponentScan(basePackages = {"com.nalbam.tutorial.spring.controller"})
+@ComponentScan(basePackages = { "com.nalbam.tutorial.spring.controller" })
 public class WebConfig extends WebMvcConfigurerAdapter {
 
     @Bean

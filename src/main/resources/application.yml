@@ -13,46 +13,41 @@ slack:
   webhook: ${SLACK_WEBHOOK:/slack/token}
   channel: ${SLACK_CHANNEL:sandbox}
 
+version: ${VERSION:v0.0.0}
+
 message: ${MESSAGE:Refreshed}
 
 ---
-
 spring:
   profiles: default
 message: ${MESSAGE:Server UP}
 
 ---
-
 spring:
   profiles: dev
 message: ${MESSAGE:Development UP}
 
 ---
-
 spring:
   profiles: stage
 message: ${MESSAGE:Staging UP}
 
 ---
-
 spring:
   profiles: prod
 message: ${MESSAGE:Production UP}
 
 ---
-
 spring:
   profiles: dev-dev
 message: ${MESSAGE:Development UP}
 
 ---
-
 spring:
   profiles: dev-stage
 message: ${MESSAGE:Staging UP}
 
 ---
-
 spring:
   profiles: dev-prod
 message: ${MESSAGE:Production UP}
