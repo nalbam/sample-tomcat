@@ -2,8 +2,6 @@ package com.nalbam.tutorial.spring.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,7 +16,7 @@ public class RestfulController {
     private Environment environment;
 
     @RequestMapping(path = { "/health" }, method = RequestMethod.GET)
-    public ResponseEntity<Map<String, Object>> health() {
+    public Map<String, Object> health() {
         Map<String, Object> map = new HashMap<>();
         map.put("result", "OK");
         map.put("type", "health");
@@ -26,11 +24,11 @@ public class RestfulController {
         // version
         map.put("version", environment.getProperty("version"));
 
-        return new ResponseEntity<>(map, HttpStatus.OK);
+        return map;
     }
 
     @RequestMapping(path = { "/stress" }, method = RequestMethod.GET)
-    public ResponseEntity<Map<String, Object>> stress() {
+    public Map<String, Object> stress() {
         Map<String, Object> map = new HashMap<>();
         map.put("result", "OK");
         map.put("type", "stress");
@@ -43,7 +41,7 @@ public class RestfulController {
         // sum
         map.put("sum", sum.toString());
 
-        return new ResponseEntity<>(map, HttpStatus.OK);
+        return map;
     }
 
 }
