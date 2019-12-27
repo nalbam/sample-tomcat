@@ -49,34 +49,4 @@ public class HomeController {
         return "index";
     }
 
-    @RequestMapping(path = { "/health" }, method = RequestMethod.GET)
-    public String stress(Model model) {
-        model.addAttribute("result", "OK");
-
-        // version
-        model.addAttribute("version", environment.getProperty("version"));
-
-        return "stress";
-    }
-
-    @RequestMapping(path = { "/stress" }, method = RequestMethod.GET)
-    public String stress(Model model) {
-        model.addAttribute("result", "OK");
-
-        Double sum = 0d;
-        for (int i = 0; i < 1000000; i++) {
-            sum += Math.sqrt(i);
-        }
-
-        // sum
-        model.addAttribute("sum", sum.toString());
-
-        // date
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-        sdf.setTimeZone(TimeZone.getTimeZone("Asia/Seoul"));
-        model.addAttribute("date", sdf.format(new Date()));
-
-        return "stress";
-    }
-
 }
