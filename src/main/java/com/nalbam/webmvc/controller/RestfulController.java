@@ -1,5 +1,7 @@
 package com.nalbam.webmvc.controller;
 
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,6 +16,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.TimeZone;
 
+@Slf4j
 @RestController
 public class RestfulController {
 
@@ -22,7 +25,9 @@ public class RestfulController {
 
     @GetMapping("/live")
     public Map<String, Object> live() {
-        final Map<String, Object> map = new HashMap<>();
+        log.debug("live");
+
+        Map<String, Object> map = new HashMap<>();
         map.put("result", "OK");
         map.put("type", "live");
 
@@ -31,7 +36,9 @@ public class RestfulController {
 
     @GetMapping("/read")
     public Map<String, Object> read() {
-        final Map<String, Object> map = new HashMap<>();
+        log.debug("read");
+
+        Map<String, Object> map = new HashMap<>();
         map.put("result", "OK");
         map.put("type", "live");
 
@@ -40,6 +47,8 @@ public class RestfulController {
 
     @GetMapping("/health")
     public Map<String, Object> health() {
+        log.debug("health");
+
         final Map<String, Object> map = new HashMap<>();
         map.put("result", "OK");
         map.put("type", "health");
@@ -52,6 +61,8 @@ public class RestfulController {
 
     @GetMapping("/stress")
     public Map<String, Object> stress() {
+        log.debug("stress");
+
         final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
         sdf.setTimeZone(TimeZone.getTimeZone("Asia/Seoul"));
 
@@ -112,6 +123,8 @@ public class RestfulController {
 
     @GetMapping("/dealy/{sec}")
     public Map<String, Object> dealy(@PathVariable final Integer sec) {
+        log.debug("dealy {}", sec);
+
         final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
         sdf.setTimeZone(TimeZone.getTimeZone("Asia/Seoul"));
 
@@ -133,6 +146,8 @@ public class RestfulController {
 
     @GetMapping("/timeout/{sec}")
     public Map<String, Object> timeout(@PathVariable final Integer sec) throws TimeoutException {
+        log.debug("timeout {}", sec);
+
         final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
         sdf.setTimeZone(TimeZone.getTimeZone("Asia/Seoul"));
 
@@ -147,6 +162,8 @@ public class RestfulController {
 
     @GetMapping("/fault/{rate}")
     public Map<String, Object> fault(@PathVariable final Integer rate) throws RuntimeException {
+        log.debug("fault {}", rate);
+
         final Integer random = (new Random()).nextInt(100);
 
         if (random > rate) {
