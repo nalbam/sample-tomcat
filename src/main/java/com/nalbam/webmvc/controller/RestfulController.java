@@ -1,12 +1,15 @@
 package com.nalbam.webmvc.controller;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.core.env.Environment;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
 
 import java.text.SimpleDateFormat;
 import java.util.concurrent.TimeoutException;
@@ -22,6 +25,12 @@ public class RestfulController {
 
     @Autowired
     private Environment environment;
+
+    private final RestTemplate restTemplate;
+
+    public RestfulController(RestTemplateBuilder restTemplateBuilder) {
+        this.restTemplate = restTemplateBuilder.build();
+    }
 
     @GetMapping("/live")
     public Map<String, Object> live() {
@@ -80,46 +89,60 @@ public class RestfulController {
         return map;
     }
 
-    // @GetMapping("/node")
-    // public String node() {
-    // String url;
+    @GetMapping("/node")
+    public String node() {
+        log.debug("node");
 
-    // if ("default".equals(profile)) {
-    // url = "http://localhost:3000/spring";
-    // } else {
-    // url = "http://sample-node/spring";
-    // }
+        String url;
 
-    // String res = restTemplate.getForObject(url, String.class);
+        if ("default".equals(environment.getProperty("profile"))) {
+            url = "http://localhost:3000/tomcat";
+        } else {
+            url = "http://sample-node/tomcat";
+        }
 
-    // return res;
-    // }
+        String res = restTemplate.getForObject(url, String.class);
 
-    // @GetMapping("/loop/{count}")
-    // public Map<String, Object> loop(@PathVariable Integer count) {
-    // Map<String, Object> map = new HashMap<>();
-    // map.put("result", "OK");
+        return res;
+    }
 
-    // if (count <= 0) {
-    // return map;
-    // }
+    @GetMapping("/loop/{count}")
+    public Map<String, Object> loop(@PathVariable Integer count) {
+        log.debug("loop {}", count);
 
-    // count--;
+        Map<String, Object> map = new HashMap<>();
+        map.put("result", "OK");
 
-    // String url;
+        if (count <= 0) {
+            return map;
+        }
 
-    // if ("default".equals(profile)) {
-    // url = "http://localhost:8080/loop/" + count;
-    // } else {
-    // url = "http://sample-spring/loop/" + count;
-    // }
+        count--;
 
-    // Map<String, Object> res = restTemplate.getForObject(url, Map.class);
+        String url;
 
-    // map.put("data", res);
+        if ("default".equals(environment.getProperty("profile"))) {
+            url = "http://localhost:8080/loop/" + count;
+        } else {
+            url = "http://sample-tomcat/loop/" + count;
+        }
 
-    // return map;
-    // }
+        String json = restTemplate.getForObject(url, String.class);
+
+        ObjectMapper mapper = new ObjectMapper();
+        Map<String, Object> res = null;
+
+        try {
+            res = mapper.readValue(json, new TypeReference<Map<String, Object>>() {
+            });
+        } catch (Exception e) {
+            log.info("Exception converting {} to map", json, e);
+        }
+
+        map.put("data", res);
+
+        return map;
+    }
 
     @GetMapping("/dealy/{sec}")
     public Map<String, Object> dealy(@PathVariable final Integer sec) {
