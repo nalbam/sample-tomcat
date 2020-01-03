@@ -25,7 +25,7 @@ if [ "${1}" == "stop" ] || [ "${1}" == "run" ]; then
     echo "$ docker ps -a"
     docker ps -a
 
-    CNT="$(docker ps -a | grep 'nalbam/sample-tomcat' | wc -l | xargs)"
+    CNT="$(docker ps -a | grep 'sample-tomcat' | wc -l | xargs)"
     if [ "x${CNT}" != "x0" ]; then
         docker stop sample-tomcat
         docker rm sample-tomcat
