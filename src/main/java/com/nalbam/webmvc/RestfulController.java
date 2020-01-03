@@ -146,13 +146,11 @@ public class RestfulController {
     }
 
     @GetMapping("/fault/{rate}")
-    public Map<String, Object> fault(@PathVariable Integer rate) {
-        Random random = new Random();
+    public Map<String, Object> fault(@PathVariable Integer rate) throws RuntimeException {
+        Integer random = (new Random()).nextInt(100);
 
-        try {
-            Thread.sleep(random.nextInt(500) + 100);
-        } catch (final InterruptedException e) {
-            e.printStackTrace();
+        if (random > rate) {
+            throw new RuntimeException("Fault! " + random);
         }
 
         Map<String, Object> map = new HashMap<>();
