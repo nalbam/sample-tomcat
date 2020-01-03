@@ -8,25 +8,33 @@ fi
 
 echo "VERSION=${VERSION}"
 
-echo "$ mvn package"
+if [ "${1}" == "docker" ] || [ "${1}" == "run" ]; then
+    echo "$ mvn clean"
+    mvn clean
+fi
+
+echo "$ mvn package -Dthis.version=${VERSION}"
 mvn package -Dthis.version=${VERSION}
 
 if [ "${1}" == "docker" ] || [ "${1}" == "run" ]; then
-    docker build -t nalbam/sample-tomcat .
+    echo "$ docker build -t nalbam/sample-tomcat:local ."
+    docker build -t nalbam/sample-tomcat:local .
 fi
 
-if [ "${1}" == "run" ]; then
+if [ "${1}" == "stop" ] || [ "${1}" == "run" ]; then
     echo "$ docker ps -a"
     docker ps -a
 
     CNT="$(docker ps -a | grep 'nalbam/sample-tomcat' | wc -l | xargs)"
-    if [ "${CNT}" != "x0" ]; then
+    if [ "x${CNT}" != "x0" ]; then
         docker stop sample-tomcat
         docker rm sample-tomcat
     fi
+fi
 
-    echo "$ docker run --name sample-tomcat -p 8080:8080 -d nalbam/sample-tomcat"
-    docker run --name sample-tomcat -p 8080:8080 -d nalbam/sample-tomcat
+if [ "${1}" == "run" ]; then
+    echo "$ docker run --name sample-tomcat -p 8080:8080 -d nalbam/sample-tomcat:local"
+    docker run --name sample-tomcat -p 8080:8080 -d nalbam/sample-tomcat:local
 
     echo "$ docker ps -a"
     docker ps -a
