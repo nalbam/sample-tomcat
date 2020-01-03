@@ -22,7 +22,7 @@ public class RestfulController {
 
     @GetMapping("/live")
     public Map<String, Object> live() {
-        Map<String, Object> map = new HashMap<>();
+        final Map<String, Object> map = new HashMap<>();
         map.put("result", "OK");
         map.put("type", "live");
 
@@ -31,7 +31,7 @@ public class RestfulController {
 
     @GetMapping("/read")
     public Map<String, Object> read() {
-        Map<String, Object> map = new HashMap<>();
+        final Map<String, Object> map = new HashMap<>();
         map.put("result", "OK");
         map.put("type", "live");
 
@@ -40,7 +40,7 @@ public class RestfulController {
 
     @GetMapping("/health")
     public Map<String, Object> health() {
-        Map<String, Object> map = new HashMap<>();
+        final Map<String, Object> map = new HashMap<>();
         map.put("result", "OK");
         map.put("type", "health");
 
@@ -52,7 +52,7 @@ public class RestfulController {
 
     @GetMapping("/stress")
     public Map<String, Object> stress() {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+        final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
         sdf.setTimeZone(TimeZone.getTimeZone("Asia/Seoul"));
 
         Double sum = 0d;
@@ -60,7 +60,7 @@ public class RestfulController {
             sum += Math.sqrt(i);
         }
 
-        Map<String, Object> map = new HashMap<>();
+        final Map<String, Object> map = new HashMap<>();
         map.put("result", "OK");
         map.put("type", "stress");
         map.put("sum", sum);
@@ -111,8 +111,8 @@ public class RestfulController {
     // }
 
     @GetMapping("/dealy/{sec}")
-    public Map<String, Object> dealy(@PathVariable Integer sec) {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+    public Map<String, Object> dealy(@PathVariable final Integer sec) {
+        final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
         sdf.setTimeZone(TimeZone.getTimeZone("Asia/Seoul"));
 
         if (sec > 0) {
@@ -123,7 +123,7 @@ public class RestfulController {
             }
         }
 
-        Map<String, Object> map = new HashMap<>();
+        final Map<String, Object> map = new HashMap<>();
         map.put("result", "OK");
         map.put("type", "dealy");
         map.put("date", sdf.format(new Date()));
@@ -132,8 +132,8 @@ public class RestfulController {
     }
 
     @GetMapping("/timeout/{sec}")
-    public Map<String, Object> timeout(@PathVariable Integer sec) throws TimeoutException {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+    public Map<String, Object> timeout(@PathVariable final Integer sec) throws TimeoutException {
+        final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
         sdf.setTimeZone(TimeZone.getTimeZone("Asia/Seoul"));
 
         try {
@@ -146,14 +146,14 @@ public class RestfulController {
     }
 
     @GetMapping("/fault/{rate}")
-    public Map<String, Object> fault(@PathVariable Integer rate) throws RuntimeException {
-        Integer random = (new Random()).nextInt(100);
+    public Map<String, Object> fault(@PathVariable final Integer rate) throws RuntimeException {
+        final Integer random = (new Random()).nextInt(100);
 
         if (random > rate) {
             throw new RuntimeException("Fault! " + random);
         }
 
-        Map<String, Object> map = new HashMap<>();
+        final Map<String, Object> map = new HashMap<>();
         map.put("result", "OK");
         map.put("type", "fault");
 
