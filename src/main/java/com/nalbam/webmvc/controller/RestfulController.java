@@ -1,4 +1,4 @@
-package com.nalbam.webmvc;
+package com.nalbam.webmvc.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
