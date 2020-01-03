@@ -4,8 +4,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.core.env.Environment;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
@@ -26,11 +26,8 @@ public class RestfulController {
     @Autowired
     private Environment environment;
 
-    private final RestTemplate restTemplate;
-
-    public RestfulController(RestTemplateBuilder restTemplateBuilder) {
-        this.restTemplate = restTemplateBuilder.build();
-    }
+    // @Autowired
+    // private RestTemplate restTemplate;
 
     @GetMapping("/live")
     public Map<String, Object> live() {
@@ -101,6 +98,8 @@ public class RestfulController {
             url = "http://sample-node/tomcat";
         }
 
+        RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
+
         String res = restTemplate.getForObject(url, String.class);
 
         return res;
@@ -126,6 +125,8 @@ public class RestfulController {
         } else {
             url = "http://sample-tomcat/loop/" + count;
         }
+
+        RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
 
         String json = restTemplate.getForObject(url, String.class);
 
