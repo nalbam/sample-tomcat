@@ -22,7 +22,7 @@ public class HomeController {
     @RequestMapping(path = { "/" }, method = RequestMethod.GET)
     public String index(Model model) {
         // profile
-        model.addAttribute("profile", environment.getProperty("profile"));
+        model.addAttribute("profile", environment.getProperty("spring.profiles.active"));
 
         // version
         model.addAttribute("version", environment.getProperty("version"));

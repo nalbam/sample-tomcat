@@ -20,6 +20,7 @@
                 <h1><img src="https://nalbam.com/static/logo/spring-tomcat.png"></h1>
                 <h3 class="hello-title">${host}</h3>
                 <p>${date}</p>
+                <p>${profile}</p>
                 <p>${message}</p>
                 <p>${version}</p>
                 <p>

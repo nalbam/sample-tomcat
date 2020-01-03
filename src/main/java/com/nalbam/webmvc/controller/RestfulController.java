@@ -3,6 +3,8 @@ package com.nalbam.webmvc.controller;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
@@ -25,9 +27,6 @@ public class RestfulController {
 
     @Autowired
     private Environment environment;
-
-    // @Autowired
-    // private RestTemplate restTemplate;
 
     @GetMapping("/live")
     public Map<String, Object> live() {
@@ -92,15 +91,13 @@ public class RestfulController {
 
         String url;
 
-        if ("default".equals(environment.getProperty("profile"))) {
+        if ("default".equals(environment.getProperty("spring.profiles.active"))) {
             url = "http://localhost:3000/tomcat";
         } else {
             url = "http://sample-node/tomcat";
         }
 
-        RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
-
-        String res = restTemplate.getForObject(url, String.class);
+        String res = getRestTemplate().getForObject(url, String.class);
 
         return res;
     }
@@ -120,15 +117,13 @@ public class RestfulController {
 
         String url;
 
-        if ("default".equals(environment.getProperty("profile"))) {
+        if ("default".equals(environment.getProperty("spring.profiles.active"))) {
             url = "http://localhost:8080/loop/" + count;
         } else {
             url = "http://sample-tomcat/loop/" + count;
         }
 
-        RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
-
-        String json = restTemplate.getForObject(url, String.class);
+        String json = getRestTemplate().getForObject(url, String.class);
 
         ObjectMapper mapper = new ObjectMapper();
         Map<String, Object> res = null;
@@ -199,6 +194,15 @@ public class RestfulController {
         map.put("type", "fault");
 
         return map;
+    }
+
+    private RestTemplate getRestTemplate() {
+        HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory();
+        factory.setReadTimeout(5000);
+        factory.setConnectTimeout(3000);
+        HttpClient httpClient = HttpClientBuilder.create().setMaxConnTotal(100).setMaxConnPerRoute(5).build();
+        factory.setHttpClient(httpClient);
+        return new RestTemplate(factory);
     }
 
 }
