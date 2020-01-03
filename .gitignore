@@ -43,6 +43,9 @@ dist/
 .settings/
 .metadata/
 
+# Tomcat
+tomcat/
+
 # Temp
 *.pid
 *.log
