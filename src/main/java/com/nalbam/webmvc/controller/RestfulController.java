@@ -185,7 +185,7 @@ public class RestfulController {
 
         final Integer random = (new Random()).nextInt(100);
 
-        if (random > rate) {
+        if (random < rate) {
             throw new RuntimeException("Fault! " + random);
         }
 
