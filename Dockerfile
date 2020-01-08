@@ -15,3 +15,5 @@ COPY target/jmx/*.jar /data/jmx_javaagent.jar
 COPY target/jmx/config.yaml /data/config.yaml
 
 COPY target/*.war /usr/local/tomcat/webapps/ROOT.war
+
+CMD java $JMX_OPTS -jar $TOMCAT_HOME/start.jar
