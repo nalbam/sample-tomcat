@@ -9,7 +9,7 @@ EXPOSE 8081
 
 RUN rm -rf /usr/local/tomcat/webapps/*
 
-ENV JAVA_OPTS "-javaagent:/data/jmx_javaagent.jar=8081:/data/config.yaml"
+ENTRYPOINT ["/data/entrypoint.sh"]
 
 COPY target/jmx/*.jar /data/jmx_javaagent.jar
 COPY target/jmx/config.yaml /data/config.yaml
