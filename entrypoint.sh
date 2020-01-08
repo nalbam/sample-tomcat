@@ -10,4 +10,4 @@ fi
 
 JAVA_OPTS="${JAVA_OPTS} ${JMX_OPTS}"
 
-# catalina.sh run
+${CATALINA_HOME}/bin/catalina.sh run
