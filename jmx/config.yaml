@@ -1,6 +1,11 @@
 ---
+hostPort: 0.0.0.0:8081
+username:
+password:
+
 lowercaseOutputLabelNames: true
 lowercaseOutputName: true
+
 rules:
   - pattern: 'Catalina<type=GlobalRequestProcessor, name=\"(\w+-\w+)-(\d+)\"><>(\w+):'
     name: tomcat_$3_total
