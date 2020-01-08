@@ -8,6 +8,6 @@ if [ "${JMX_ENABLED}" == "true" ]; then
     JMX_OPTS="-javaagent:${JMX_PATH}=${JMX_PORT}:${JMX_CONFIG}"
 fi
 
-JAVA_OPTS="${JAVA_OPTS} ${JMX_OPTS}"
+export JAVA_OPTS="${JAVA_OPTS} ${JMX_OPTS}"
 
 ${CATALINA_HOME}/bin/catalina.sh run
