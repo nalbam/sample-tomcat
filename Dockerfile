@@ -11,6 +11,8 @@ RUN rm -rf /usr/local/tomcat/webapps/*
 
 ENTRYPOINT ["/data/entrypoint.sh"]
 
+COPY target/entrypoint.sh /data/entrypoint.sh
+
 COPY target/jmx/*.jar /data/jmx_javaagent.jar
 COPY target/jmx/config.yaml /data/config.yaml
 
