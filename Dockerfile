@@ -2,7 +2,7 @@
 
 FROM tomcat:8-jre8-alpine
 
-RUN apk add --no-cache bash curl
+# RUN apk add --no-cache bash curl
 
 EXPOSE 8080
 EXPOSE 8081
