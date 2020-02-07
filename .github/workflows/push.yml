@@ -55,6 +55,7 @@ jobs:
         env:
           # USERNAME: ${{ secrets.DOCKER_USERNAME }}
           PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+          IMAGE_NAME: "NalBam/sample-tomcat"
           LATEST: "true"
 
       - name: Build & Push to GitHub Package
