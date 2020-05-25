@@ -94,7 +94,7 @@ public class RestfulController {
         if ("default".equals(environment.getProperty("spring.profiles.active"))) {
             url = "http://localhost:3000/tomcat";
         } else {
-            url = "http://sample-node/tomcat";
+            url = "http://sample-node:3000/tomcat";
         }
 
         String res = getRestTemplate().getForObject(url, String.class);
@@ -120,7 +120,7 @@ public class RestfulController {
         if ("default".equals(environment.getProperty("spring.profiles.active"))) {
             url = "http://localhost:8080/loop/" + count;
         } else {
-            url = "http://sample-tomcat/loop/" + count;
+            url = "http://sample-tomcat:8080/loop/" + count;
         }
 
         String json = getRestTemplate().getForObject(url, String.class);
