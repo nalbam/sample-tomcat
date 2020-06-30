@@ -1,5 +1,5 @@
 def SERVICE_GROUP = "sample"
-def SERVICE_NAME = "spring"
+def SERVICE_NAME = "tomcat"
 def IMAGE_NAME = "${SERVICE_GROUP}-${SERVICE_NAME}"
 def REPOSITORY_URL = "https://github.com/nalbam/sample-tomcat"
 def REPOSITORY_SECRET = ""
