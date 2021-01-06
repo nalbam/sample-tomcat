@@ -21,6 +21,9 @@ public class HomeController {
 
     @RequestMapping(path = { "/" }, method = RequestMethod.GET)
     public String index(Model model) {
+        // cluster
+        model.addAttribute("cluster", environment.getProperty("cluster"));
+
         // profile
         model.addAttribute("profile", environment.getProperty("spring.profiles.active"));
 
