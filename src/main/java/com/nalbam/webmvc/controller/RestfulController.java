@@ -140,9 +140,9 @@ public class RestfulController {
         return map;
     }
 
-    @GetMapping("/dealy/{sec}")
-    public Map<String, Object> dealy(@PathVariable final Integer sec) {
-        log.debug("dealy {}", sec);
+    @GetMapping("/delay/{sec}")
+    public Map<String, Object> delay(@PathVariable final Integer sec) {
+        log.debug("delay {}", sec);
 
         final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
         sdf.setTimeZone(TimeZone.getTimeZone("Asia/Seoul"));
@@ -157,7 +157,7 @@ public class RestfulController {
 
         final Map<String, Object> map = new HashMap<>();
         map.put("result", "OK");
-        map.put("type", "dealy");
+        map.put("type", "delay");
         map.put("date", sdf.format(new Date()));
 
         return map;
