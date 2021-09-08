@@ -1,6 +1,6 @@
 # Dockerfile
 
-FROM tomcat:8-jre8-alpine
+FROM docker.io/library/tomcat:8-jre8-alpine
 
 # RUN apk add --no-cache bash curl
 
