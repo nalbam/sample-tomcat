@@ -98,18 +98,11 @@ mvn_build() {
     get_version
 
     if [ "${VERSION}" == "" ]; then
-        _command "mvn package -DskipTests"
-        mvn package
+        _command "mvn package"
+        mvn package || _error "mvn package failed"
     else
-        _command "mvn package -DskipTests -Dthis.version=${VERSION}"
-        mvn package -Dthis.version=${VERSION}
-    fi
-
-    # jmx
-    if [ -f jmx/config.yaml ]; then
-        mkdir -p target/jmx
-        cp jmx/config.yaml target/jmx/config.yaml
-        cp jmx/jmx_* target/jmx/jmx_javaagent.jar
+        _command "mvn package -Dthis.version=${VERSION}"
+        mvn package -Dthis.version=${VERSION} || _error "mvn package failed"
     fi
 }
 
