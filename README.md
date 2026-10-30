@@ -60,7 +60,7 @@ To use another Tomcat 11 installation, copy `target/*.war` to `$CATALINA_HOME/we
 
 | Path | Description |
 |---|---|
-| `/` | HTML page (JSP) |
+| `/` | HTML page (JSP). Needs the JSTL `c` taglib (`jakarta.tags.core`). |
 | `/live`, `/read`, `/health` | Health checks. Return JSON. |
 | `/stress` | CPU load |
 | `/delay/{sec}` | Responds after `sec` seconds |
@@ -68,6 +68,8 @@ To use another Tomcat 11 installation, copy `target/*.war` to `$CATALINA_HOME/we
 | `/fault/{rate}` | Fails with probability `rate` percent |
 | `/loop/{count}` | Calls itself `count` times |
 | `/node` | Calls `sample-node` |
+
+The PR build runs `scripts/smoke.sh` against the container. It checks that `/` has no unprocessed `<c:` or `${` and that `/static/css/main.css` and `/static/js/main.js` return 200.
 
 ## Java agents
 
