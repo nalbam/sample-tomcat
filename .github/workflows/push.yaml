@@ -45,7 +45,9 @@ jobs:
         run: |
           docker run --name smoke -p 8080:8080 -d ${{ github.event.repository.name }}:pr-${{ github.event.number }}
           for i in $(seq 1 30); do
-            curl -fs http://localhost:8080/live && exit 0
+            if curl -fs http://localhost:8080/live; then
+              exec ./scripts/smoke.sh http://localhost:8080
+            fi
             sleep 2
           done
           docker logs smoke
