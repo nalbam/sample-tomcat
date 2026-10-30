@@ -5,6 +5,10 @@ on:
     branches:
       - main
       - master
+  pull_request:
+    branches:
+      - main
+      - master
 
 jobs:
   build:
@@ -12,28 +16,50 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
       - name: Setup Java
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v6
         with:
-          java-version: "1.8"
-          java-package: jdk
-          architecture: x64
+          distribution: temurin
+          java-version: "25"
+          cache: maven
 
       - name: Run Build
         run: |
           ./build.sh
 
+      - name: Build Docker Image (PR)
+        if: github.event_name == 'pull_request'
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: false
+          load: true
+          tags: ${{ github.event.repository.name }}:pr-${{ github.event.number }}
+
+      - name: Smoke Test Docker Image (PR)
+        if: github.event_name == 'pull_request'
+        run: |
+          docker run --name smoke -p 8080:8080 -d ${{ github.event.repository.name }}:pr-${{ github.event.number }}
+          for i in $(seq 1 30); do
+            curl -fs http://localhost:8080/live && exit 0
+            sleep 2
+          done
+          docker logs smoke
+          exit 1
+
       - name: Bump Version
+        if: github.event_name == 'push'
         id: bump
         uses: opspresso/action-builder@master
         with:
           args: --version
 
       - name: Release to GitHub
+        if: github.event_name == 'push'
         uses: opspresso/action-builder@master
         with:
           args: --release
@@ -42,6 +68,7 @@ jobs:
           TAG_NAME: ${{ steps.bump.outputs.version }}
 
       - name: Trigger for GitOps
+        if: github.event_name == 'push'
         uses: opspresso/action-builder@master
         with:
           args: --dispatch
@@ -52,39 +79,46 @@ jobs:
           VERSION: ${{ steps.bump.outputs.version }}
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
+        if: github.event_name == 'push'
+        uses: docker/setup-qemu-action@v4
 
       - name: Set up Docker Buildx
+        if: github.event_name == 'push'
         id: buildx
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v4
 
       - name: Login to DockerHub
-        uses: docker/login-action@v1
+        if: github.event_name == 'push'
+        uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Login to Github Container Registry
-        uses: docker/login-action@v1
+        if: github.event_name == 'push'
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        if: github.event_name == 'push'
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_BRUCE }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_BRUCE }}
           aws-region: ap-northeast-2
 
       - name: Login to Amazon ECR
+        if: github.event_name == 'push'
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
+        uses: aws-actions/amazon-ecr-login@v2
 
       - name: Docker meta
+        if: github.event_name == 'push'
         id: meta
-        uses: docker/metadata-action@v3
+        uses: docker/metadata-action@v6
         with:
           images: |
             nalbam/${{ github.event.repository.name }}
@@ -94,7 +128,8 @@ jobs:
             type=semver,pattern={{raw}},value=${{ steps.bump.outputs.version }}
 
       - name: Build and push
-        uses: docker/build-push-action@v2
+        if: github.event_name == 'push'
+        uses: docker/build-push-action@v7
         with:
           builder: ${{ steps.buildx.outputs.name }}
           context: .

@@ -1,6 +1,6 @@
 # Dockerfile
 
-FROM tomcat:8-jre8-alpine
+FROM tomcat:11.0.27-jre25-temurin
 
 LABEL maintainer="me@nalbam.com" \
       org.opencontainers.image.description="A Sample Docker image for Tomcat App" \
@@ -20,7 +20,7 @@ ENTRYPOINT ["/bin/sh", "/data/entrypoint.sh"]
 COPY ./entrypoint.sh /data/entrypoint.sh
 
 COPY ./jmx/config.yaml /data/config.yaml
-COPY ./jmx/dd-java-agent-0.59.0.jar.zip /data/dd-java-agent.jar
-COPY ./jmx/jmx_prometheus_javaagent-0.13.0.jar.zip /data/jmx_javaagent.jar
+ADD https://repo1.maven.org/maven2/com/datadoghq/dd-java-agent/1.68.0/dd-java-agent-1.68.0.jar /data/dd-java-agent.jar
+ADD https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/1.0.1/jmx_prometheus_javaagent-1.0.1.jar /data/jmx_javaagent.jar
 
 COPY target/*.war /usr/local/tomcat/webapps/ROOT.war
