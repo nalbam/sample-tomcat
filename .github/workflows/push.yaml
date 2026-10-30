@@ -102,19 +102,6 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Configure AWS credentials
-        if: github.event_name == 'push'
-        uses: aws-actions/configure-aws-credentials@v6
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_BRUCE }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_BRUCE }}
-          aws-region: ap-northeast-2
-
-      - name: Login to Amazon ECR
-        if: github.event_name == 'push'
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
       - name: Docker meta
         if: github.event_name == 'push'
         id: meta
@@ -123,7 +110,6 @@ jobs:
           images: |
             nalbam/${{ github.event.repository.name }}
             ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}
-            ${{ steps.login-ecr.outputs.registry }}/nalbam/${{ github.event.repository.name }}
           tags: |
             type=semver,pattern={{raw}},value=${{ steps.bump.outputs.version }}
 
@@ -145,20 +131,6 @@ jobs:
       #   env:
       #     USERNAME: ${{ secrets.DOCKER_USERNAME }}
       #     PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-      #     # TAG_NAME: ${{ github.ref }}
-      #     # PLATFORM: "linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6"
-      #     # BUILDX: "true"
-      #     # LATEST: "true"
-
-      # - name: Build & Push to AWS ECR Private
-      #   uses: opspresso/action-docker@master
-      #   with:
-      #     args: --ecr
-      #   env:
-      #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_BRUCE }}
-      #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_BRUCE }}
-      #     AWS_REGION: "ap-northeast-2"
-      #     # REGISTRY: "public.ecr.aws/nalbam"
       #     # TAG_NAME: ${{ github.ref }}
       #     # PLATFORM: "linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6"
       #     # BUILDX: "true"

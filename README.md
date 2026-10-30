@@ -13,8 +13,14 @@
 
 ## Docker
 
+The image is published to two registries: Docker Hub (`nalbam/sample-tomcat`) and GitHub Container Registry (`ghcr.io/nalbam/sample-tomcat`).
+
 ```bash
 docker pull nalbam/sample-tomcat
+```
+
+```bash
+docker pull ghcr.io/nalbam/sample-tomcat
 ```
 
 ```bash
