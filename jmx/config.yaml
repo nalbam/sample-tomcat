@@ -1,15 +1,13 @@
-# https://github.com/prometheus/jmx_exporter
+# Prometheus JMX exporter 1.7.0, Java agent mode.
+# https://github.com/prometheus/jmx_exporter/blob/1.7.0/website/docs/reference/configuration.md
+# The agent reads the MBeans of its own JVM. Remote JMX keys (hostPort, jmxUrl, username, password, ssl)
+# only apply to the standalone exporter, so they are not set here.
 ---
 # startDelaySeconds: 0
-# hostPort: 127.0.0.1:8080
-username:
-password:
-# jmxUrl: service:jmx:rmi:///jndi/rmi://127.0.0.1:8080/jmxrmi
-ssl: false
 lowercaseOutputName: true
 lowercaseOutputLabelNames: true
-# whitelistObjectNames: ["org.apache.cassandra.metrics:*"]
-# blacklistObjectNames: ["org.apache.cassandra.metrics:type=ColumnFamily,*"]
+# includeObjectNames: ["Catalina:*"]
+# excludeObjectNames: ["Catalina:type=RequestProcessor,*"]
 rules:
   - pattern: ".*"
   # - pattern: 'Catalina<type=GlobalRequestProcessor, name=\"(\w+-\w+)-(\d+)\"><>(\w+):'

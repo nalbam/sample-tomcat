@@ -40,9 +40,27 @@ jobs:
           java-version: "25"
           cache: maven
 
+      # The runner image ships another Maven; pom.xml requires 3.10.0 or later.
+      - name: Setup Maven
+        env:
+          MAVEN_VERSION: 3.10.0
+          MAVEN_SHA512: 908b1501bfb420bf7c8affb855534a9c407fd6099367bfb9f2f2dcb8e9799102bffb84518cde74c679bd76870247c6528683abdd620581bffa90f95d92d175aa
+        run: |
+          archive="${RUNNER_TEMP}/apache-maven-${MAVEN_VERSION}-bin.tar.gz"
+          curl -fsSL -o "${archive}" \
+            "https://repo1.maven.org/maven2/org/apache/maven/apache-maven/${MAVEN_VERSION}/apache-maven-${MAVEN_VERSION}-bin.tar.gz"
+          echo "${MAVEN_SHA512}  ${archive}" | sha512sum -c -
+          tar -xzf "${archive}" -C "${RUNNER_TEMP}"
+          echo "${RUNNER_TEMP}/apache-maven-${MAVEN_VERSION}/bin" >> "${GITHUB_PATH}"
+
       - name: Run Build
         run: |
+          mvn -v
           ./build.sh
+
+      - name: Test entrypoint
+        run: |
+          ./scripts/test-entrypoint.sh
 
       - name: Build Docker Image
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
@@ -54,15 +72,20 @@ jobs:
 
       - name: Smoke Test Docker Image
         run: |
-          docker run --name smoke -p 8080:8080 -d "${IMAGE}"
+          docker run --name smoke -p 8080:8080 -e VERSION="ci-${GITHUB_SHA}" -d "${IMAGE}"
           for _ in $(seq 1 30); do
             if curl -fs http://localhost:8080/live; then
-              exec ./scripts/smoke.sh http://localhost:8080
+              EXPECT_VERSION="ci-${GITHUB_SHA}" exec ./scripts/smoke.sh http://localhost:8080
             fi
             sleep 2
           done
           docker logs smoke
           exit 1
+
+      - name: Test Java agents
+        run: |
+          docker rm -f smoke
+          ./scripts/agents.sh "${IMAGE}"
 
       # Tag runs hand the tested WAR to the release image job.
       - name: Upload WAR (tag)
