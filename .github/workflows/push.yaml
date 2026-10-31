@@ -9,19 +9,32 @@ on:
     branches:
       - main
       - master
+  workflow_call:
+
+permissions:
+  contents: read
+
+# Called from release.yml, github.workflow is the caller's name, so this group
+# never matches the release group.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      IMAGE: ${{ github.event.repository.name }}:ci-${{ github.sha }}
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
+          persist-credentials: false
 
       - name: Setup Java
-        uses: actions/setup-java@v6
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
           java-version: "25"
@@ -31,20 +44,18 @@ jobs:
         run: |
           ./build.sh
 
-      - name: Build Docker Image (PR)
-        if: github.event_name == 'pull_request'
-        uses: docker/build-push-action@v7
+      - name: Build Docker Image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
           push: false
           load: true
-          tags: ${{ github.event.repository.name }}:pr-${{ github.event.number }}
+          tags: ${{ env.IMAGE }}
 
-      - name: Smoke Test Docker Image (PR)
-        if: github.event_name == 'pull_request'
+      - name: Smoke Test Docker Image
         run: |
-          docker run --name smoke -p 8080:8080 -d ${{ github.event.repository.name }}:pr-${{ github.event.number }}
-          for i in $(seq 1 30); do
+          docker run --name smoke -p 8080:8080 -d "${IMAGE}"
+          for _ in $(seq 1 30); do
             if curl -fs http://localhost:8080/live; then
               exec ./scripts/smoke.sh http://localhost:8080
             fi
@@ -53,126 +64,12 @@ jobs:
           docker logs smoke
           exit 1
 
-      - name: Bump Version
-        if: github.event_name == 'push'
-        id: bump
-        uses: opspresso/action-builder@master
+      # Tag runs hand the tested WAR to the release image job.
+      - name: Upload WAR (tag)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          args: --version
-
-      - name: Release to GitHub
-        if: github.event_name == 'push'
-        uses: opspresso/action-builder@master
-        with:
-          args: --release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG_NAME: ${{ steps.bump.outputs.version }}
-
-      - name: Trigger for GitOps
-        if: github.event_name == 'push'
-        uses: opspresso/action-builder@master
-        with:
-          args: --dispatch
-        env:
-          GITHUB_TOKEN: ${{ secrets.GHP_TOKEN }}
-          GITOPS_REPO: "opspresso/argocd-env-demo"
-          PROJECT: ${{ github.event.repository.name }}
-          VERSION: ${{ steps.bump.outputs.version }}
-
-      - name: Set up QEMU
-        if: github.event_name == 'push'
-        uses: docker/setup-qemu-action@v4
-
-      - name: Set up Docker Buildx
-        if: github.event_name == 'push'
-        id: buildx
-        uses: docker/setup-buildx-action@v4
-
-      - name: Login to DockerHub
-        if: github.event_name == 'push'
-        uses: docker/login-action@v4
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Login to Github Container Registry
-        if: github.event_name == 'push'
-        uses: docker/login-action@v4
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Docker meta
-        if: github.event_name == 'push'
-        id: meta
-        uses: docker/metadata-action@v6
-        with:
-          images: |
-            nalbam/${{ github.event.repository.name }}
-            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}
-          tags: |
-            type=semver,pattern={{raw}},value=${{ steps.bump.outputs.version }}
-
-      - name: Build and push
-        if: github.event_name == 'push'
-        uses: docker/build-push-action@v7
-        with:
-          builder: ${{ steps.buildx.outputs.name }}
-          context: .
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-
-      # - name: Build & Push to Docker Hub
-      #   uses: opspresso/action-docker@master
-      #   with:
-      #     args: --docker
-      #   env:
-      #     USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      #     PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-      #     # TAG_NAME: ${{ github.ref }}
-      #     # PLATFORM: "linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6"
-      #     # BUILDX: "true"
-      #     # LATEST: "true"
-
-      # - name: Build & Push to AWS ECR Public
-      #   uses: opspresso/action-docker@master
-      #   with:
-      #     args: --ecr
-      #   env:
-      #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      #     AWS_REGION: "ap-northeast-2"
-      #     REGISTRY: "public.ecr.aws/nalbam"
-      #     # TAG_NAME: ${{ github.ref }}
-      #     # PLATFORM: "linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6"
-      #     BUILDX: "true"
-      #     # LATEST: "true"
-
-      # - name: Build & Push to Quay.io
-      #   uses: opspresso/action-docker@master
-      #   with:
-      #     args: --docker
-      #   env:
-      #     USERNAME: ${{ secrets.QUAY_USERNAME }}
-      #     PASSWORD: ${{ secrets.QUAY_PASSWORD }}
-      #     REGISTRY: "quay.io"
-      #     # TAG_NAME: ${{ github.ref }}
-      #     # PLATFORM: "linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6"
-      #     BUILDX: "true"
-      #     # LATEST: "true"
-
-      # - name: Build & Push to GitHub Package
-      #   uses: opspresso/action-docker@master
-      #   with:
-      #     args: --docker
-      #   env:
-      #     PASSWORD: ${{ secrets.GHP_TOKEN }}
-      #     REGISTRY: "docker.pkg.github.com"
-      #     # TAG_NAME: ${{ github.ref }}
-      #     # PLATFORM: "linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6"
-      #     # BUILDX: "true"
-      #     # LATEST: "true"
+          name: war-${{ github.sha }}
+          path: target/*.war
+          if-no-files-found: error
+          retention-days: 7
