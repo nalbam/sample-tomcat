@@ -3,18 +3,24 @@
 # Tomcat starts, scripts/smoke.sh passes, each agent loads its own JAR, and the JMX exporter serves /metrics.
 # Datadog gets no API key and sends only to localhost:8126 inside the container, where nothing listens.
 # Uses host ports 8080, 8081 and 9404.
+# The container name is unique to this run; only containers that this run created are removed.
 # Usage: scripts/agents.sh <image>
 IMAGE="${1:?usage: scripts/agents.sh <image>}"
 SCRIPTS="$(cd "$(dirname "$0")" && pwd)"
-export CONTAINER=agents
+export CONTAINER="sample-tomcat-agents-$$-${RANDOM}"
 export EXPECT_VERSION=v0.0.0-agents
+CID=""
 
 TMP="$(mktemp -d)"
-trap 'docker rm -f "${CONTAINER}" > /dev/null 2>&1; rm -rf "${TMP}"' EXIT
+cleanup() {
+  [ -n "${CID}" ] && docker rm -f "${CID}" > /dev/null 2>&1
+  rm -rf "${TMP}"
+}
+trap cleanup EXIT
 
 fail() {
   echo "AGENTS FAIL [${NAME}]: $1"
-  docker logs "${CONTAINER}" 2>&1 | tail -100
+  [ -n "${CID}" ] && docker logs "${CID}" 2>&1 | tail -100
   exit 1
 }
 
@@ -23,11 +29,19 @@ start() {
   NAME="$1"
   shift
   echo "--- ${NAME}"
-  docker rm -f "${CONTAINER}" > /dev/null 2>&1
-  docker run --name "${CONTAINER}" -d -p 8080:8080 -p 8081:8081 -p 9404:9404 \
+  if [ -n "${CID}" ]; then
+    docker rm -f "${CID}" > /dev/null || fail "docker rm failed"
+    CID=""
+  fi
+  # docker writes the ID to the cidfile once it creates the container, also when the start fails.
+  rm -f "${TMP}/cid"
+  docker run --name "${CONTAINER}" --cidfile "${TMP}/cid" -d -p 8080:8080 -p 8081:8081 -p 9404:9404 \
     -e VERSION="${EXPECT_VERSION}" \
     -e DD_INSTRUMENTATION_TELEMETRY_ENABLED=false -e DD_REMOTE_CONFIGURATION_ENABLED=false \
-    "$@" "${IMAGE}" > /dev/null || fail "docker run failed"
+    "$@" "${IMAGE}" > /dev/null
+  local status=$?
+  [ -s "${TMP}/cid" ] && CID="$(cat "${TMP}/cid")"
+  [ "${status}" -eq 0 ] || fail "docker run failed"
   for _ in $(seq 1 60); do
     curl -fs http://localhost:8080/live > /dev/null && break
     [ "$(docker inspect -f '{{.State.Running}}' "${CONTAINER}")" = "true" ] || fail "container exited"
@@ -86,9 +100,11 @@ expect_metrics 8081 '^catalina_globalrequestprocessor_requestcount\{'
 
 # Custom JMX path, port and config, next to Datadog.
 NAME="custom jmx setup"
-docker create --name "${CONTAINER}-cp" "${IMAGE}" > /dev/null || fail "docker create failed"
-docker cp "${CONTAINER}-cp:${JMX_JAR}" "${TMP}/jmx.jar" || fail "docker cp failed"
-docker rm "${CONTAINER}-cp" > /dev/null
+CP_ID="$(docker create "${IMAGE}")" || fail "docker create failed"
+docker cp "${CP_ID}:${JMX_JAR}" "${TMP}/jmx.jar"
+CP_STATUS=$?
+docker rm "${CP_ID}" > /dev/null
+[ "${CP_STATUS}" -eq 0 ] || fail "docker cp failed"
 printf 'lowercaseOutputName: true\nincludeObjectNames: ["java.lang:type=Memory"]\nrules:\n  - pattern: ".*"\n' > "${TMP}/jmx.yaml"
 chmod a+r "${TMP}/jmx.jar" "${TMP}/jmx.yaml"
 

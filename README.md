@@ -64,6 +64,7 @@ mvn package          # compiles, runs the tests and creates target/*.war
 ```bash
 mvn -B clean package
 ./scripts/test-entrypoint.sh                  # -javaagent options of entrypoint.sh, no Docker needed
+./scripts/test-agents.sh                      # scripts/agents.sh removes only its own containers, no Docker needed
 docker build -t sample-tomcat:local .         # needs target/*.war
 docker run --name smoke -d -p 8080:8080 -e VERSION=v0.0.0-local sample-tomcat:local
 EXPECT_VERSION=v0.0.0-local ./scripts/smoke.sh # wait until http://localhost:8080/live responds
@@ -104,7 +105,7 @@ If `EXPECT_VERSION` is set, `/health` must report it as `version`.
 ## Release
 
 Pull requests and pushes to `main` or `master` run the `build` check in [push.yaml](.github/workflows/push.yaml) on Temurin 25:
-Maven 3.10.0, `./build.sh` (`mvn package` with the tests), `scripts/test-entrypoint.sh`, a local Docker build tagged `sample-tomcat:ci-<sha>`,
+Maven 3.10.0, `./build.sh` (`mvn package` with the tests), `scripts/test-entrypoint.sh`, `scripts/test-agents.sh`, a local Docker build tagged `sample-tomcat:ci-<sha>`,
 the smoke test above with `VERSION=ci-<sha>`, and `scripts/agents.sh` (see [Java agents](#java-agents)).
 Branch pushes only run CI. They do not bump versions, create releases, push images or trigger GitOps.
 
@@ -168,10 +169,15 @@ gh release view -R nalbam/sample-tomcat "${TAG}" --json tagName,isPrerelease,url
 # The image holds the tested WAR as ROOT.war and runs the expected versions.
 docker run --rm --entrypoint sha256sum "nalbam/sample-tomcat:${TAG}" /usr/local/tomcat/webapps/ROOT.war
 docker run --rm --name check -d -p 8080:8080 -e VERSION="${TAG}" "nalbam/sample-tomcat:${TAG}"
-curl -s http://localhost:8080/health                       # "version" is the VERSION value
+for _ in $(seq 1 60); do curl -fs -o /dev/null http://localhost:8080/live && break; sleep 2; done
+curl -fsS http://localhost:8080/live > /dev/null || echo "NOT READY: /live did not respond in 120 s"
+curl -fsS http://localhost:8080/health                      # "version" is the VERSION value
 docker logs check 2>&1 | grep -E 'Server version number|JVM Version'
 docker stop check
 ```
+
+The loop waits up to 120 seconds for `/live`. If Tomcat is not ready or a request fails, `curl -fsS` prints the error, for example `Connection refused` or `The requested URL returned error: 503`.
+Read `docker logs check` before `docker stop check` removes the container.
 
 The two `sha256sum` values must match. Run the same `docker run` checks with `ghcr.io/nalbam/sample-tomcat:${TAG}`.
 
@@ -201,5 +207,6 @@ curl http://localhost:8081/metrics
 ```
 
 `scripts/agents.sh <image>` starts the image with no agents, Datadog only, JMX only, both, and both with a custom JMX path, port (`9404`) and configuration.
+It names the container `sample-tomcat-agents-<pid>-<random>` and removes only the containers that it created, so an existing container is kept.
 For each case it runs `scripts/smoke.sh`, compares the `-javaagent` options that Tomcat logs, and checks the metrics port.
 Datadog gets no API key; it only tries `localhost:8126` inside the container, so the check sends no data to Datadog.
