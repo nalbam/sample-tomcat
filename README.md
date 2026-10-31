@@ -98,9 +98,40 @@ To use another Tomcat 11 installation, copy `target/*.war` to `$CATALINA_HOME/we
 | `/loop/{count}` | Calls itself `count` times |
 | `/node` | Calls `sample-node` |
 
-CI runs `scripts/smoke.sh` against the container after `/live` responds. It checks that `/` has no unprocessed `<c:` or `${` and that `/static/css/main.css` and `/static/js/main.js` return 200.
+CI runs `scripts/smoke.sh` against the container after `/live` responds. It checks that `/` has no unprocessed `<c:` or `${` and that `/static/css/main.css` and `/static/js/main.js` are linked.
+Every local `href`/`src` in the page (for example `/static/favicon.ico`) must be under `<context>/static/` and return 200.
 It also checks the JSON of `/live` and `/read` (`{"result":"OK","type":"live"}`) and `/health` (`{"result":"OK","type":"health","version":...}`).
 If `EXPECT_VERSION` is set, `/health` must report it as `version`.
+For a non-ROOT deployment, pass the context in the URL: `scripts/smoke.sh http://localhost:8080/sample`.
+
+## Page assets
+
+`/` (`src/main/webapp/WEB-INF/views/index.jsp`) loads these browser libraries from CDNs, pinned with `integrity` (SRI) hashes:
+
+| Library | Version | URL |
+|---|---|---|
+| Bootstrap CSS and JS | 5.3.8 | `cdn.jsdelivr.net/npm/bootstrap@5.3.8` |
+| jQuery | 4.0.0 | `code.jquery.com/jquery-4.0.0.min.js` |
+| Font Awesome Free | 7.3.1 | `use.fontawesome.com/releases/v7.3.1/css/all.css` |
+
+Local assets (`/static/...`) use `${contextPath}`, so they work in ROOT and in other contexts.
+No local script uses jQuery or Bootstrap JS. They stay because the external counter script below is outside this repository and its dependencies are unknown.
+To change a version, update the URL and the `integrity` hash together, for example `curl -s <url> | openssl dgst -sha384 -binary | base64`.
+
+Known constraint: the page also loads `https://nalbam.com/static/sample/counter.js`. That URL returns 404, and the counter API in `sample-node` was removed.
+The thumbs up/down buttons therefore show `0` and do nothing. This is not a pass.
+
+Browser check (needs Node.js and Playwright with Chromium):
+
+```bash
+npm i --prefix /tmp/pw playwright && npx --prefix /tmp/pw playwright install chromium
+NODE_PATH=/tmp/pw/node_modules node scripts/browser-check.cjs http://localhost:8080/
+```
+
+It opens `/` at 1280x800 and 375x667 and saves screenshots in `target/browser/`.
+It fails on HTTP, console or page errors, unrendered JSTL/EL, missing icons, unstyled buttons, horizontal overflow and local assets outside the context path.
+It reports the `counter.js` failure as `known failure`, not as an error.
+Add text arguments to require template values, for example `node scripts/browser-check.cjs <url> v1.2.3`.
 
 ## Release
 
