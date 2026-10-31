@@ -1,14 +1,19 @@
 #!/bin/bash
 # Smoke test for a running container (default name "smoke", set CONTAINER to change it).
-# GET / must render JSTL/EL, and the css and js links in the body must open.
+# GET / must render JSTL/EL, the css and js links must use the context path,
+# and every local href/src in the body must open.
 # /live, /read and /health must return their JSON. If EXPECT_VERSION is set,
 # /health must report it as "version" (the VERSION environment variable of the container).
 # Usage: [CONTAINER=name] [EXPECT_VERSION=v1.2.3] scripts/smoke.sh [base_url]
+#   base_url may end with a context path, e.g. http://localhost:8080/sample
 BASE="${1:-http://localhost:8080}"
+BASE="${BASE%/}"
+CONTEXT=$(echo "${BASE}" | sed -E 's#^[a-z]+://[^/]+##')
+ORIGIN="${BASE%"${CONTEXT}"}"
 
 fail() {
   echo "SMOKE FAIL: $1"
-  docker logs "${CONTAINER:-smoke}"
+  if command -v docker >/dev/null; then docker logs "${CONTAINER:-smoke}"; fi
   exit 1
 }
 
@@ -19,9 +24,18 @@ if echo "${body}" | grep -qF '<c:' || echo "${body}" | grep -qF '${'; then
 fi
 
 for path in /static/css/main.css /static/js/main.js; do
-  echo "${body}" | grep -qF "\"${path}\"" || fail "link not found in body: ${path}"
-  code=$(curl -s -o /dev/null -w '%{http_code}' "${BASE}${path}")
-  [ "${code}" = "200" ] || fail "GET ${path} returned ${code}"
+  echo "${body}" | grep -qF "\"${CONTEXT}${path}\"" || fail "link not found in body: ${CONTEXT}${path}"
+done
+
+# Local assets are the href/src values that start with "/". All must be under the context path.
+assets=$(echo "${body}" | grep -oE '(href|src)="/[^"]*"' | sed -E 's/^(href|src)="(.*)"$/\2/' | sort -u)
+for asset in ${assets}; do
+  case "${asset}" in
+    "${CONTEXT}"/static/*) ;;
+    *) fail "local asset outside ${CONTEXT:-/}/static: ${asset}" ;;
+  esac
+  code=$(curl -s -o /dev/null -w '%{http_code}' "${ORIGIN}${asset}")
+  [ "${code}" = "200" ] || fail "GET ${asset} returned ${code}"
 done
 
 # check_json <path> <jq filter that must be true> [jq options]
