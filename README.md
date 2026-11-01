@@ -72,6 +72,20 @@ docker rm -f smoke
 ./scripts/agents.sh sample-tomcat:local       # uses ports 8080, 8081 and 9404
 ```
 
+### Dependencies
+
+[docs/open-pr-review.md](docs/open-pr-review.md) lists the open Dependabot PRs and the current `pom.xml` coordinates that supersede them.
+To check the open PRs and the resolved versions again (JDK 25, Maven 3.10.0 or later):
+
+```bash
+gh api --paginate 'repos/nalbam/sample-tomcat/pulls?state=open&per_page=100' --jq '.[] | [.number, .title] | @tsv'
+mvn -B help:effective-pom -Doutput=target/effective-pom.xml   # plugins, for example jetty-ee11-maven-plugin
+mvn -B dependency:tree                                        # httpclient5, Jackson 2 and 3, Logback, JUnit
+```
+
+`gh api` needs `gh auth login` or a token in `GH_TOKEN` or `GITHUB_TOKEN`. The review page shows an anonymous `curl` query for the public API.
+A failed query means the list is unknown, not empty. The review page explains why Jackson 2 stays next to Jackson 3.
+
 ## Run
 
 ```bash
