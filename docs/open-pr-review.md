@@ -111,7 +111,9 @@ Can be closed, all superseded by `main` at `26e4ee7`:
 
 ## Check again
 
-Prerequisites: `gh` (the public API works without login, at a lower rate limit), JDK 25, Maven 3.10.0 or later.
+Prerequisites: JDK 25, Maven 3.10.0 or later, and an authenticated `gh`.
+`gh api` and `gh pr` need a stored login (`gh auth login`) or a token in `GH_TOKEN` or `GITHUB_TOKEN`. Without one, they print an authentication message and stop.
+Check with `gh auth status`.
 
 1. List the open PRs:
 
@@ -120,8 +122,18 @@ Prerequisites: `gh` (the public API works without login, at a lower rate limit),
      --jq '.[] | [.number, .title, .head.sha] | @tsv'
    ```
 
-   If the command fails (for example with a rate limit or network error), the list is unknown. Do not treat it as "no open PRs". Record the time and the error, and run it again.
-   A new PR that is not in the table needs its own review.
+   Without `gh` authentication, use the public REST API directly. It accepts anonymous requests at a lower rate limit (60 requests per hour per IP address):
+
+   ```bash
+   curl -fsS 'https://api.github.com/repos/nalbam/sample-tomcat/pulls?state=open&per_page=100' \
+     | jq -r '.[] | [.number, .title, .head.sha] | @tsv'
+   ```
+
+   This returns one page of up to 100 PRs. If there are more, read the next page with `&page=2`.
+   For a diff without `gh`, open `https://github.com/nalbam/sample-tomcat/pull/<number>.diff`.
+
+   If the command fails (for example with an authentication, rate limit or network error), the list is unknown. Do not treat it as "no open PRs". Record the time and the error, and run it again.
+   A new PR that is not in the table needs its own review. [#187](https://github.com/nalbam/sample-tomcat/pull/187) is the PR that adds this page; it is not a dependency update.
 
 2. Read the change and the checks of one PR:
 

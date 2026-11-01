@@ -83,7 +83,8 @@ mvn -B help:effective-pom -Doutput=target/effective-pom.xml   # plugins, for exa
 mvn -B dependency:tree                                        # httpclient5, Jackson 2 and 3, Logback, JUnit
 ```
 
-A failed `gh api` call means the list is unknown, not empty. The review page explains why Jackson 2 stays next to Jackson 3.
+`gh api` needs `gh auth login` or a token in `GH_TOKEN` or `GITHUB_TOKEN`. The review page shows an anonymous `curl` query for the public API.
+A failed query means the list is unknown, not empty. The review page explains why Jackson 2 stays next to Jackson 3.
 
 ## Run
 
