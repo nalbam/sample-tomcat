@@ -2,7 +2,8 @@
 # Smoke test for a running container (default name "smoke", set CONTAINER to change it).
 # GET / must render JSTL/EL, the css and js links must use the context path,
 # and every local href/src in the body must open.
-# /live, /read and /health must return their JSON. If EXPECT_VERSION is set,
+# /live, /read and /health must return their JSON. /health must report result "ok",
+# type "health", a string version and uptime as a whole number of seconds (>= 0). If EXPECT_VERSION is set,
 # /health must report it as "version" (the VERSION environment variable of the container).
 # Usage: [CONTAINER=name] [EXPECT_VERSION=v1.2.3] scripts/smoke.sh [base_url]
 #   base_url may end with a context path, e.g. http://localhost:8080/sample
@@ -49,7 +50,8 @@ check_json() {
 # /read reports type "live"; this is the current controller contract.
 check_json /live '.result == "OK" and .type == "live"'
 check_json /read '.result == "OK" and .type == "live"'
-check_json /health '.result == "OK" and .type == "health"'
+check_json /health '.result == "ok" and .type == "health" and (.version | type) == "string"
+  and (.uptime | type) == "number" and .uptime >= 0 and (.uptime | floor) == .uptime'
 
 if [ -n "${EXPECT_VERSION}" ]; then
   check_json /health '.version == $v' --arg v "${EXPECT_VERSION}"

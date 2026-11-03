@@ -93,6 +93,14 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- spring-test: MockMvc for the HTTP contract tests -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-test</artifactId>
+            <version>7.0.10</version>
+            <scope>test</scope>
+        </dependency>
+
         <!-- junit -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
