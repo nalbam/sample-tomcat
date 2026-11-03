@@ -8,6 +8,7 @@ import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
 import org.apache.hc.core5.util.Timeout;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +18,7 @@ import org.springframework.web.client.RestTemplate;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.lang.management.ManagementFactory;
 import java.text.SimpleDateFormat;
 import java.util.concurrent.TimeoutException;
 import java.util.Date;
@@ -31,6 +33,11 @@ public class RestfulController {
 
     @Autowired
     private Environment environment;
+
+    // Resolved by the property placeholder of appconfig-root.xml: the environment
+    // (VERSION variable, -Dversion) first, then application.yml (${VERSION:v0.0.0}).
+    @Value("${version}")
+    private String version;
 
     @GetMapping("/live")
     public Map<String, Object> live() {
@@ -59,11 +66,12 @@ public class RestfulController {
         log.debug("health");
 
         final Map<String, Object> map = new HashMap<>();
-        map.put("result", "OK");
+        map.put("result", "ok");
         map.put("type", "health");
+        map.put("version", version);
 
-        // version
-        map.put("version", environment.getProperty("version"));
+        // whole seconds since the JVM started, not since the WAR was deployed
+        map.put("uptime", ManagementFactory.getRuntimeMXBean().getUptime() / 1000);
 
         return map;
     }

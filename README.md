@@ -59,6 +59,8 @@ The project stays on Java 25, the newest LTS that the official image supports, s
 mvn package          # compiles, runs the tests and creates target/*.war
 ```
 
+`RestfulControllerTests` loads `WEB-INF/appconfig-root.xml` with MockMvc (`spring-test`, no container) and checks the `/health` JSON with a set and an unset version, and the `/live` and `/read` JSON.
+
 `./build.sh` runs the same `mvn package`.
 
 ```bash
@@ -112,9 +114,27 @@ To use another Tomcat 11 installation, copy `target/*.war` to `$CATALINA_HOME/we
 | `/loop/{count}` | Calls itself `count` times |
 | `/node` | Calls `sample-node` |
 
+### Health response
+
+`/health` uses the same fields as `sample-node` and `sample-spring`:
+
+| Field | Type | Value |
+|---|---|---|
+| `result` | string | `ok` or `error`. This app has no failing dependency check, so it returns `ok` whenever it responds. |
+| `type` | string | `health` (kept from earlier versions) |
+| `version` | string | `VERSION` environment variable (or the `version` system property), default `v0.0.0` |
+| `uptime` | integer | Whole seconds since the JVM started (0 or more). It counts from the Tomcat process start, not from the WAR deployment. |
+
+```bash
+$ curl -s http://localhost:8080/health
+{"result":"ok","type":"health","version":"v0.0.0","uptime":42}
+```
+
+The field order may differ. `/live` and `/read` keep their own contract, `{"result":"OK","type":"live"}`.
+
 CI runs `scripts/smoke.sh` against the container after `/live` responds. It checks that `/` has no unprocessed `<c:` or `${` and that `/static/css/main.css` and `/static/js/main.js` are linked.
 Every local `href`/`src` in the page (for example `/static/favicon.ico`) must be under `<context>/static/` and return 200.
-It also checks the JSON of `/live` and `/read` (`{"result":"OK","type":"live"}`) and `/health` (`{"result":"OK","type":"health","version":...}`).
+It also checks the JSON of `/live` and `/read` (`{"result":"OK","type":"live"}`) and `/health` (`result` `ok`, `type` `health`, a string `version` and an integer `uptime` of 0 or more, see [Health response](#health-response)).
 If `EXPECT_VERSION` is set, `/health` must report it as `version`.
 For a non-ROOT deployment, pass the context in the URL: `scripts/smoke.sh http://localhost:8080/sample`.
 
@@ -183,6 +203,7 @@ Versions:
 - The Git tag is the release version. It names the images and the GitHub Release.
 - The Maven version in `pom.xml` is fixed (`v0.8.0`). It only names the WAR file, which the image renames to `ROOT.war`.
 - The runtime `VERSION` (shown by the app) comes from the `VERSION` environment variable, default `v0.0.0`. The image does not set it; set it at deploy time.
+  `/health` resolves it through `application.yml` (`version: ${VERSION:v0.0.0}`), so an unset `VERSION` still returns the string `v0.0.0`.
 - The legacy `VERSION` and `BUMP` files are not used by the release workflow.
 
 Repository settings:
