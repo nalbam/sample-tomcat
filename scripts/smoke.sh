@@ -44,7 +44,8 @@ ready() { http -f -o /dev/null "http://localhost:$PORT/health" 2> /dev/null; }
 start() {
   cleanup
   docker run -d --name "$NAME" -e VERSION="$VERSION" "$@" "$IMAGE" > /dev/null
-  for _ in $(seq "$TIMEOUT"); do
+  local deadline=$((SECONDS + TIMEOUT))
+  while [ "$SECONDS" -lt "$deadline" ]; do
     [ "$(docker inspect -f '{{.State.Running}}' "$NAME")" = true ] || fail "container exited"
     ready && return 0
     sleep 1
@@ -155,7 +156,7 @@ if grep -F -e '<c:' -e '${' <<< "$page" > /dev/null; then
 fi
 grep -F "$VERSION" <<< "$page" > /dev/null || fail "GET / does not show version $VERSION"
 echo "ok: GET / renders the JSP with version $VERSION"
-assets="$(grep -oE '(href|src)="/[^"]*"' <<< "$page" | sed -E 's/^(href|src)="(.*)"$/\2/' | sort -u)"
+assets="$(grep -oE '(href|src)="/[^"]*"' <<< "$page" | sed -E 's/^(href|src)="(.*)"$/\2/' | sort -u || true)"
 [ -n "$assets" ] || fail "GET / has no local assets"
 for asset in $assets; do
   check_get "$asset"
