@@ -9,7 +9,7 @@ A sample Spring MVC WAR on Tomcat for Kubernetes demos, with optional Java agent
 
 ```bash
 docker run -d --name sample-tomcat -p 8080:8080 ghcr.io/nalbam/sample-tomcat
-curl http://localhost:8080/health
+until curl -fs http://localhost:8080/health; do sleep 1; done   # the JVM starts in a few seconds
 docker rm -f sample-tomcat
 ```
 
@@ -19,7 +19,7 @@ so Tomcat receives `SIGTERM` from `docker stop`.
 | Environment variable | Default | Description |
 | --- | --- | --- |
 | `PORT` | `8080` | HTTP connector port (the `port.http` property in `conf/server.xml`). |
-| `VERSION` | image tag | Version that `/health` and `/` report. |
+| `VERSION` | `v0.0.0-dev` | Version that `/health` and `/` report. Release images set it to their tag; a local build sets it with `--build-arg VERSION=...`. |
 | `JAVA_OPTS` | - | Options passed to `java`. |
 
 ## Requirements
@@ -106,7 +106,7 @@ CI runs `scripts/smoke.sh` against the container after `/live` responds. It chec
 Every local `href`/`src` in the page (for example `/static/favicon.ico`) must be under `<context>/static/` and return 200.
 It also checks the JSON of `/live` and `/read` (`{"result":"OK","type":"live"}`) and `/health` (`result` `ok`, `type` `health`, a string `version` and an integer `uptime` of 0 or more, see [Health response](#health-response)).
 If `EXPECT_VERSION` is set, `/health` must report it as `version`.
-For a non-ROOT deployment, pass the context in the URL: `scripts/smoke.sh http://localhost:8080/sample`.
+For a non-ROOT deployment, deploy the WAR under another context path and open `http://localhost:8080/<context>/`. `scripts/smoke.sh` checks the image, which serves the app as ROOT.
 
 ## Page assets
 
