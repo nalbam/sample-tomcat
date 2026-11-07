@@ -19,7 +19,7 @@ so Tomcat receives `SIGTERM` from `docker stop`.
 | Environment variable | Default | Description |
 | --- | --- | --- |
 | `PORT` | `8080` | HTTP connector port (the `port.http` property in `conf/server.xml`). |
-| `VERSION` | `v0.0.0-dev` | Version that `/health` and `/` report. Release images set it to their tag; a local build sets it with `--build-arg VERSION=...`. |
+| `VERSION` | `v0.0.0-dev` | Version that `/health`, `/version` and `/` report. Release images set it to their tag; a local build sets it with `--build-arg VERSION=...`. |
 | `JAVA_OPTS` | - | Options passed to `java`. |
 
 ## Requirements
@@ -58,8 +58,9 @@ docker buildx build --load -t sample-tomcat:dev .
 scripts/smoke.sh sample-tomcat:dev
 ```
 
-`RestfulControllerTests` loads `WEB-INF/appconfig-root.xml` with MockMvc (`spring-test`, no container) and checks the `/health` JSON with a set and an unset version, and the `/live` and `/read` JSON.
-`scripts/smoke.sh` checks `/health`, `/live`, `/read`, that `/` renders the JSP and that its local assets open,
+`RestfulControllerTests` loads `WEB-INF/appconfig-root.xml` with MockMvc (`spring-test`, no container). It checks the `/health` and `/version` JSON with a set and an unset version, `/live`, `/read`,
+and `/ready` before and after shutdown: after a `ContextClosedEvent`, and after `close()` of the application context, `/ready` returns 503 and `/live` still returns 200.
+`scripts/smoke.sh` checks `/health`, `/live`, `/ready`, `/version`, `/read`, that `/` renders the JSP and that its local assets open,
 the non-root user, `docker stop`, each Java agent setting, and a custom `PORT`.
 
 Without Docker, use JDK 25 and Maven 3.10.0 or later:
@@ -76,7 +77,11 @@ To use another Tomcat 11 installation, copy `target/*.war` to `$CATALINA_HOME/we
 | Path | Description |
 |---|---|
 | `/` | HTML page (JSP). Needs the JSTL `c` taglib (`jakarta.tags.core`). |
-| `/live`, `/read`, `/health` | Health checks. Return JSON. |
+| `/live` | Liveness probe. HTTP 200 `{"live":true}`, also during shutdown. |
+| `/ready` | Readiness probe. HTTP 200 `{"ready":true}`. When shutdown starts (`SIGTERM` stops the web application and closes the Spring context), HTTP 503 `{"ready":false}`. |
+| `/version` | HTTP 200 `{"version":"<VERSION>","java":"<java.version>"}`. `version` is the same value as in `/health`. |
+| `/read` | HTTP 200 `{"result":"OK","type":"live"}` (kept from earlier versions) |
+| `/health` | Health check. Returns JSON, see [Health response](#health-response). |
 | `/stress` | CPU load |
 | `/delay/{sec}` | Responds after `sec` seconds |
 | `/timeout/{sec}` | Waits `sec` seconds, then fails with `TimeoutException` |
@@ -100,12 +105,23 @@ $ curl -s http://localhost:8080/health
 {"result":"ok","type":"health","version":"v0.0.0","uptime":42}
 ```
 
-The field order may differ. `/live` and `/read` keep their own contract, `{"result":"OK","type":"live"}`.
+The field order may differ. The probes use the same contract as `sample-node` and `sample-spring`:
 
-CI runs `scripts/smoke.sh` against the container after `/live` responds. It checks that `/` has no unprocessed `<c:` or `${` and that `/static/css/main.css` and `/static/js/main.js` are linked.
-Every local `href`/`src` in the page (for example `/static/favicon.ico`) must be under `<context>/static/` and return 200.
-It also checks the JSON of `/live` and `/read` (`{"result":"OK","type":"live"}`) and `/health` (`result` `ok`, `type` `health`, a string `version` and an integer `uptime` of 0 or more, see [Health response](#health-response)).
-If `EXPECT_VERSION` is set, `/health` must report it as `version`.
+```bash
+$ curl -s http://localhost:8080/live
+{"live":true}
+$ curl -s http://localhost:8080/ready
+{"ready":true}
+$ curl -s http://localhost:8080/version
+{"version":"v0.0.0","java":"25.0.1"}
+```
+
+`/read` keeps its own contract, `{"result":"OK","type":"live"}`.
+
+CI runs `scripts/smoke.sh IMAGE VERSION` against the container after `/health` responds. `VERSION` defaults to `v0.0.0-smoke` and is passed to the container.
+It checks that `/health` returns `result` `ok` and that `VERSION`, that `/live` has `live` true, `/ready` has `ready` true, `/version` has `version` equal to `VERSION`, and that `/read` contains `"type":"live"`.
+It checks that `/` has no unprocessed `<c:` or `${`, shows `VERSION`, and that every local `href`/`src` in the page (for example `/static/css/main.css`) returns 200.
+The smoke test does not check the 503 of `/ready` after `SIGTERM`, because Tomcat stops its connector first and takes no new request; `RestfulControllerTests` checks it.
 For a non-ROOT deployment, deploy the WAR under another context path and open `http://localhost:8080/<context>/`. `scripts/smoke.sh` checks the image, which serves the app as ROOT.
 
 ## Page assets

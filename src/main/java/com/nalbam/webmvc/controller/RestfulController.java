@@ -9,7 +9,11 @@ import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuil
 import org.apache.hc.core5.util.Timeout;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.event.ContextClosedEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -39,13 +43,50 @@ public class RestfulController {
     @Value("${version}")
     private String version;
 
+    // Set when the Spring context starts to close. On SIGTERM, Tomcat stops the web
+    // application, ContextLoaderListener closes the root context and publishes
+    // ContextClosedEvent. A close of the DispatcherServlet child context also
+    // reaches this listener, and it also means shutdown.
+    private volatile boolean shuttingDown = false;
+
+    @EventListener(ContextClosedEvent.class)
+    public void onContextClosed() {
+        log.info("context closed: /ready returns 503");
+        shuttingDown = true;
+    }
+
     @GetMapping("/live")
     public Map<String, Object> live() {
         log.debug("live");
 
         Map<String, Object> map = new HashMap<>();
-        map.put("result", "OK");
-        map.put("type", "live");
+        map.put("live", true);
+
+        return map;
+    }
+
+    // Once shutdown begins, /ready fails so the load balancer stops routing here
+    // while in-flight requests finish; /live keeps answering.
+    @GetMapping("/ready")
+    public ResponseEntity<Map<String, Object>> ready() {
+        log.debug("ready");
+
+        Map<String, Object> map = new HashMap<>();
+        if (shuttingDown) {
+            map.put("ready", false);
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(map);
+        }
+        map.put("ready", true);
+        return ResponseEntity.ok(map);
+    }
+
+    @GetMapping("/version")
+    public Map<String, Object> version() {
+        log.debug("version");
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("version", version);
+        map.put("java", System.getProperty("java.version"));
 
         return map;
     }
