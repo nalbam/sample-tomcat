@@ -100,6 +100,15 @@ check_port() {
 
 # --- sample-tomcat checks ----------------------------------------------------------
 
+# check_json PATH JQ_FILTER [JQ_ARGS...] checks HTTP 200 and that jq -e accepts the body.
+check_json() {
+  local path="$1" filter="$2" body
+  shift 2
+  body="$(http -f "http://localhost:$PORT$path")" || fail "GET $path"
+  jq -e "$@" "$filter" <<< "$body" > /dev/null || fail "GET $path returned $body, expected $filter"
+  echo "ok: GET $path $body"
+}
+
 # check_stop checks that docker stop ends Java with SIGTERM (exit code 143), not SIGKILL (137).
 check_stop() {
   docker stop --time 30 "$NAME" > /dev/null
@@ -145,8 +154,13 @@ check_no_agent_logs() {
 
 start
 check_health
-check_get /live '"type":"live"'
+check_json /live '.live == true'
+check_json /ready '.ready == true'
+# shellcheck disable=SC2016 # $version is a jq variable, set with --arg.
+check_json /version '.version == $version' --arg version "$VERSION"
 check_get /read '"type":"live"'
+# The 503 of /ready after SIGTERM is checked by RestfulControllerTests, not here:
+# Tomcat stops its connector first on shutdown, so no new request reaches /ready.
 
 # GET / renders the JSP: no JSTL or EL is left, and every local asset opens.
 page="$(http -f "http://localhost:$PORT/")" || fail "GET /"
