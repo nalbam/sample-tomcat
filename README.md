@@ -58,9 +58,9 @@ docker buildx build --load -t sample-tomcat:dev .
 scripts/smoke.sh sample-tomcat:dev
 ```
 
-`RestfulControllerTests` loads `WEB-INF/appconfig-root.xml` with MockMvc (`spring-test`, no container). It checks the `/health` and `/version` JSON with a set and an unset version, `/live`, `/read`,
+`RestfulControllerTests` loads `WEB-INF/appconfig-root.xml` with MockMvc (`spring-test`, no container). It checks the `/health` JSON (including `service` `sample-tomcat`) and the `/version` JSON with a set and an unset version, `/live`, `/read`,
 and `/ready` before and after shutdown: after a `ContextClosedEvent`, and after `close()` of the application context, `/ready` returns 503 and `/live` still returns 200.
-`scripts/smoke.sh` checks `/health`, `/live`, `/ready`, `/version`, `/read`, that `/` renders the JSP and that its local assets open,
+`scripts/smoke.sh` checks `/health` (including `service`), `/live`, `/ready`, `/version`, `/read`, that `/` renders the JSP and that its local assets open,
 the non-root user, `docker stop`, each Java agent setting, and a custom `PORT`.
 
 Without Docker, use JDK 25 and Maven 3.10.0 or later:
@@ -91,18 +91,19 @@ To use another Tomcat 11 installation, copy `target/*.war` to `$CATALINA_HOME/we
 
 ### Health response
 
-`/health` uses the same fields as `sample-node` and `sample-spring`:
+`/health` uses the same fields as `sample-node` and `sample-spring`. Only the `service` value differs: each app returns its own name.
 
 | Field | Type | Value |
 |---|---|---|
 | `result` | string | `ok` or `error`. This app has no failing dependency check, so it returns `ok` whenever it responds. |
 | `type` | string | `health` (kept from earlier versions) |
+| `service` | string | `sample-tomcat`. `sample-node` checks this value on `/tomcat` to confirm which service answered. |
 | `version` | string | `VERSION` environment variable (or the `version` system property), default `v0.0.0` |
 | `uptime` | integer | Whole seconds since the JVM started (0 or more). It counts from the Tomcat process start, not from the WAR deployment. |
 
 ```bash
 $ curl -s http://localhost:8080/health
-{"result":"ok","type":"health","version":"v0.0.0","uptime":42}
+{"result":"ok","type":"health","service":"sample-tomcat","version":"v0.0.0","uptime":42}
 ```
 
 The field order may differ. The probes use the same contract as `sample-node` and `sample-spring`:
@@ -119,7 +120,7 @@ $ curl -s http://localhost:8080/version
 `/read` keeps its own contract, `{"result":"OK","type":"live"}`.
 
 CI runs `scripts/smoke.sh IMAGE VERSION` against the container after `/health` responds. `VERSION` defaults to `v0.0.0-smoke` and is passed to the container.
-It checks that `/health` returns `result` `ok` and that `VERSION`, that `/live` has `live` true, `/ready` has `ready` true, `/version` has `version` equal to `VERSION`, and that `/read` contains `"type":"live"`.
+It checks that `/health` returns `result` `ok`, `version` equal to `VERSION` and `service` `sample-tomcat`, that `/live` has `live` true, `/ready` has `ready` true, `/version` has `version` equal to `VERSION`, and that `/read` contains `"type":"live"`.
 It checks that `/` has no unprocessed `<c:` or `${`, shows `VERSION`, and that every local `href`/`src` in the page (for example `/static/css/main.css`) returns 200.
 The smoke test does not check the 503 of `/ready` after `SIGTERM`, because Tomcat stops its connector first and takes no new request; `RestfulControllerTests` checks it.
 For a non-ROOT deployment, deploy the WAR under another context path and open `http://localhost:8080/<context>/`. `scripts/smoke.sh` checks the image, which serves the app as ROOT.

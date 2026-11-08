@@ -109,6 +109,8 @@ public class RestfulController {
         final Map<String, Object> map = new HashMap<>();
         map.put("result", "ok");
         map.put("type", "health");
+        // sample-node's /tomcat checks this value to confirm which service answered
+        map.put("service", "sample-tomcat");
         map.put("version", version);
 
         // whole seconds since the JVM started, not since the WAR was deployed
