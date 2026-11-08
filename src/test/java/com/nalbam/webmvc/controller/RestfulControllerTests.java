@@ -67,6 +67,8 @@ public class RestfulControllerTests {
         assertEquals("ok", json.get("result").asString());
         assertTrue(json.get("type").isString(), "type must be a string: " + json);
         assertEquals("health", json.get("type").asString());
+        assertTrue(json.get("service") != null && json.get("service").isString(), "service must be a string: " + json);
+        assertEquals("sample-tomcat", json.get("service").asString());
         assertTrue(json.get("version").isString(), "version must be a string: " + json);
 
         JsonNode uptime = json.get("uptime");

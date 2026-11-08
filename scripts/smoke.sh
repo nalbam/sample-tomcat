@@ -154,6 +154,7 @@ check_no_agent_logs() {
 
 start
 check_health
+check_json /health '.service == "sample-tomcat"'
 check_json /live '.live == true'
 check_json /ready '.ready == true'
 # shellcheck disable=SC2016 # $version is a jq variable, set with --arg.
