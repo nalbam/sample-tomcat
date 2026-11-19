@@ -12,7 +12,7 @@ RUN mvn -B verify && mkdir /out && cp target/sample-tomcat-*.war /out/sample-tom
 FROM scratch AS artifact
 COPY --from=build /out /
 
-FROM tomcat:11.0.27-jre25-temurin
+FROM tomcat:11.0.29-jre25-temurin
 
 LABEL org.opencontainers.image.title="sample-tomcat" \
       org.opencontainers.image.description="A sample Spring MVC app on Tomcat for Kubernetes demos" \
